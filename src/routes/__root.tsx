@@ -82,17 +82,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "أثليت — سوق المدربين وحجز الجلسات الرياضية" },
       { name: "description", content: "احجز جلسات تدريب مع أفضل المدربين والأكاديميات الرياضية في مدينتك." },
       { name: "author", content: "Athlete" },
-      { property: "og:title", content: "أثليت — سوق المدربين الرياضية" },
-      { property: "og:description", content: "احجز جلسات تدريب مع أفضل المدربين والأكاديميات الرياضية." },
+      { property: "og:title", content: "أثليت — سوق المدربين وحجز الجلسات الرياضية" },
+      { property: "og:description", content: "احجز جلسات تدريب مع أفضل المدربين والأكاديميات الرياضية في مدينتك." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "أثليت — سوق المدربين وحجز الجلسات الرياضية" },
+      { name: "twitter:description", content: "احجز جلسات تدريب مع أفضل المدربين والأكاديميات الرياضية في مدينتك." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/cFkoN2yDCdelggs9ob9Fyqa2yOr1/social-images/social-1784469475327-WhatsApp_Image_2026-07-19_at_4.01.27_PM.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/cFkoN2yDCdelggs9ob9Fyqa2yOr1/social-images/social-1784469475327-WhatsApp_Image_2026-07-19_at_4.01.27_PM.webp" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
