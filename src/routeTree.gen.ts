@@ -19,6 +19,7 @@ import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
 import { Route as AuthenticatedCoachesIdRouteImport } from './routes/_authenticated/coaches.$id'
+import { Route as AuthenticatedAcademiesIdRouteImport } from './routes/_authenticated/academies.$id'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -69,6 +70,12 @@ const AuthenticatedCoachesIdRoute = AuthenticatedCoachesIdRouteImport.update({
   path: '/coaches/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAcademiesIdRoute =
+  AuthenticatedAcademiesIdRouteImport.update({
+    id: '/academies/$id',
+    path: '/academies/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/search': typeof AuthenticatedSearchRoute
+  '/academies/$id': typeof AuthenticatedAcademiesIdRoute
   '/coaches/$id': typeof AuthenticatedCoachesIdRoute
 }
 export interface FileRoutesByTo {
@@ -90,6 +98,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/search': typeof AuthenticatedSearchRoute
+  '/academies/$id': typeof AuthenticatedAcademiesIdRoute
   '/coaches/$id': typeof AuthenticatedCoachesIdRoute
 }
 export interface FileRoutesById {
@@ -103,6 +112,7 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
+  '/_authenticated/academies/$id': typeof AuthenticatedAcademiesIdRoute
   '/_authenticated/coaches/$id': typeof AuthenticatedCoachesIdRoute
 }
 export interface FileRouteTypes {
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/profile'
     | '/search'
+    | '/academies/$id'
     | '/coaches/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/profile'
     | '/search'
+    | '/academies/$id'
     | '/coaches/$id'
   id:
     | '__root__'
@@ -139,6 +151,7 @@ export interface FileRouteTypes {
     | '/_authenticated/home'
     | '/_authenticated/profile'
     | '/_authenticated/search'
+    | '/_authenticated/academies/$id'
     | '/_authenticated/coaches/$id'
   fileRoutesById: FileRoutesById
 }
@@ -221,6 +234,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoachesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/academies/$id': {
+      id: '/_authenticated/academies/$id'
+      path: '/academies/$id'
+      fullPath: '/academies/$id'
+      preLoaderRoute: typeof AuthenticatedAcademiesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -230,6 +250,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
+  AuthenticatedAcademiesIdRoute: typeof AuthenticatedAcademiesIdRoute
   AuthenticatedCoachesIdRoute: typeof AuthenticatedCoachesIdRoute
 }
 
@@ -239,6 +260,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
+  AuthenticatedAcademiesIdRoute: AuthenticatedAcademiesIdRoute,
   AuthenticatedCoachesIdRoute: AuthenticatedCoachesIdRoute,
 }
 
