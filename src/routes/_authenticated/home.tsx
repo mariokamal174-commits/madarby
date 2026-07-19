@@ -108,6 +108,39 @@ function Home() {
     enabled: !!user?.id && profileQ.data?.primary_role === "coach",
   });
 
+  // Player bookings
+  const playerBookingsQ = useQuery({
+    queryKey: ["player_bookings", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*, coaches(full_name, title_ar), sports(name_ar)")
+        .eq("player_id", user.id)
+        .order("start_time", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id && profileQ.data?.primary_role === "player",
+  });
+
+  // Player preferences
+  const playerPrefsQ = useQuery({
+    queryKey: ["player_prefs", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("player_preferences")
+        .select("*")
+        .eq("player_id", user.id)
+        .single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!user?.id && profileQ.data?.primary_role === "player",
+  });
+
   const role = profileQ.data?.primary_role;
   const firstName = user?.user_metadata?.full_name?.split(" ")?.[0] ?? profileQ.data?.full_name?.split(" ")?.[0] ?? "بطلنا";
 
@@ -261,20 +294,149 @@ function Home() {
     );
   }
 
+  // ===== PLAYER DASHBOARD =====
+  if (role === "player") {
+    const upcomingBookings = playerBookingsQ.data?.filter(
+      (b: any) => b.status === "confirmed" && new Date(b.start_time) > new Date()
+    ) || [];
+    const completedBookings = playerBookingsQ.data?.filter((b: any) => b.status === "completed") || [];
+
+    return (
+      <div className="px-5 pt-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <p className="text-muted-foreground text-xs mb-1">مرحباً 👋</p>
+            <h1 className="font-display font-bold text-2xl">{firstName}</h1>
+            <p className="text-muted-foreground text-xs mt-1">متدرب</p>
+          </div>
+          <button className="size-11 rounded-full bg-surface flex items-center justify-center relative">
+            <Bell className="size-5" />
+            <span className="absolute top-2 left-2 size-2 rounded-full bg-primary" />
+          </button>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <Link
+            to="/bookings"
+            className="h-24 bg-gradient-to-br from-primary/10 to-cyan-500/10 rounded-3xl p-4 flex flex-col justify-between surface-lift hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="size-4 text-primary" />
+              <span className="text-xs text-muted-foreground">الجلسات القادمة</span>
+            </div>
+            <div>
+              <p className="font-display font-bold text-2xl">{upcomingBookings.length}</p>
+              <p className="text-xs text-muted-foreground">جلسة</p>
+            </div>
+          </Link>
+
+          <div className="h-24 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-3xl p-4 flex flex-col justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="size-4 text-purple-600" />
+              <span className="text-xs text-muted-foreground">إجمالي الجلسات</span>
+            </div>
+            <div>
+              <p className="font-display font-bold text-2xl">{completedBookings.length}</p>
+              <p className="text-xs text-muted-foreground">مكتملة</p>
+            </div>
+          </div>
+
+          {playerPrefsQ.data?.favorite_sports && (
+            <div className="h-24 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-3xl p-4 flex flex-col justify-between">
+              <div className="flex items-center gap-2">
+                <BookOpen className="size-4 text-orange-600" />
+                <span className="text-xs text-muted-foreground">رياضاتي</span>
+              </div>
+              <div>
+                <p className="font-display font-bold text-2xl">
+                  {playerPrefsQ.data.favorite_sports.length}
+                </p>
+                <p className="text-xs text-muted-foreground">متابعة</p>
+              </div>
+            </div>
+          )}
+
+          <Link
+            to="/booking-flow"
+            className="h-24 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-3xl p-4 flex flex-col justify-between surface-lift hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="size-4 text-green-600" />
+              <span className="text-xs text-muted-foreground">حجز جديد</span>
+            </div>
+            <div>
+              <p className="font-display font-bold text-sm">حجز جلسة</p>
+              <p className="text-xs text-muted-foreground">اختر مدرب</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Hero card */}
+        {playerPrefsQ.data?.fitness_goals && (
+          <div className="animate-soft-glow relative h-32 overflow-hidden rounded-[28px] bg-gradient-to-br from-primary via-blue-600 to-cyan-500 p-6 text-primary-foreground mb-6">
+            <div className="relative z-10">
+              <p className="text-[10px] font-bold uppercase opacity-80">أهدافك</p>
+              <h3 className="font-display font-bold text-lg mt-1 leading-tight">
+                {playerPrefsQ.data.fitness_goals}
+              </h3>
+            </div>
+          </div>
+        )}
+
+        {/* Upcoming Sessions */}
+        {upcomingBookings.length > 0 && (
+          <div className="mb-6">
+            <h2 className="font-display font-bold text-lg mb-3">الجلسات القادمة</h2>
+            <div className="space-y-3">
+              {upcomingBookings.slice(0, 3).map((booking: any) => (
+                <div
+                  key={booking.id}
+                  className="rounded-3xl border border-border bg-surface p-4"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-display font-bold text-sm">
+                        {booking.coaches?.full_name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {booking.coaches?.title_ar}
+                      </p>
+                    </div>
+                    <span className="text-xs bg-primary/10 text-primary rounded-lg px-2 py-1 font-bold">
+                      {new Date(booking.start_time).toLocaleDateString("ar-SA")}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    ⏰ {new Date(booking.start_time).toLocaleTimeString("ar-SA", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Search and Browse */}
+        <div>
+          <h2 className="font-display font-bold text-lg mb-3">ابحث عن مدرب جديد</h2>
+          <Link
+            to="/search"
+            className="flex items-center gap-3 h-12 bg-surface rounded-2xl px-4 mb-6 text-muted-foreground text-sm"
+          >
+            <Search className="size-5" />
+            ابحث عن مدرب أو أكاديمية...
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   // ===== PLAYER/ACADEMY DEFAULT DASHBOARD =====
   return (
-    <div className="px-5 pt-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <p className="text-muted-foreground text-xs mb-1">مرحباً 👋</p>
-          <h1 className="font-display font-bold text-2xl">{firstName}</h1>
-          <p className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
-            <MapPin className="size-3" />
-            {profileQ.data?.city || "الرياض"}
-          </p>
-        </div>
-        <button className="size-11 rounded-full bg-surface flex items-center justify-center relative">
           <Bell className="size-5" />
           <span className="absolute top-2 left-2 size-2 rounded-full bg-primary" />
         </button>

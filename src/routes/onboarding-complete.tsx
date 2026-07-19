@@ -10,24 +10,37 @@ export const Route = createFileRoute("/onboarding-complete")({
 
 function OnboardingComplete() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
-  async function handleContinue() {
-    setLoading(true);
-    try {
+  useEffect(() => {
+    const checkUserRole = async () => {
       const { data } = await supabase.auth.getUser();
       if (data.user) {
-        // Mark profile as onboarded
-        await supabase
+        setUser(data.user);
+        // Get user role
+        const { data: profile } = await supabase
           .from("profiles")
-          .update({ onboarded: true })
-          .eq("id", data.user.id);
+          .select("primary_role")
+          .eq("id", data.user.id)
+          .single();
+
+        // Redirect to appropriate onboarding
+        if (profile?.primary_role === "player") {
+          navigate({ to: "/player-onboarding" });
+        }
+      } else {
+        navigate({ to: "/auth" });
       }
+    };
+
+    checkUserRole();
+  }, [navigate]);
+
+  async function handleContinue() {
+    try {
       navigate({ to: "/home" });
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -65,10 +78,9 @@ function OnboardingComplete() {
 
           <button
             onClick={handleContinue}
-            disabled={loading}
-            className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-display font-bold shadow-lg shadow-primary/30 disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-display font-bold shadow-lg shadow-primary/30 flex items-center justify-center gap-2"
           >
-            {loading ? "جارٍ..." : "ابدأ الآن"}
+            ابدأ الآن
             <ArrowRight className="size-4" />
           </button>
         </div>
