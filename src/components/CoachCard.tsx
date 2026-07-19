@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Star } from "lucide-react";
+import { Star, CheckCircle } from "lucide-react";
 
 export type CoachCardData = {
   id: string;
@@ -9,6 +9,7 @@ export type CoachCardData = {
   rating: number | null;
   price_per_session: number;
   city: string | null;
+  verified?: boolean;
 };
 
 export function CoachCard({ coach }: { coach: CoachCardData }) {
@@ -22,12 +23,21 @@ export function CoachCard({ coach }: { coach: CoachCardData }) {
       <div className="relative size-24 shrink-0 overflow-hidden rounded-[18px] bg-neutral-200">
         {coach.avatar_url ? (
           <img src={coach.avatar_url} alt={coach.full_name} className="w-full h-full object-cover" loading="lazy" />
-        ) : null}
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold text-2xl">
+            {coach.full_name?.charAt(0)}
+          </div>
+        )}
       </div>
       <div className="relative flex flex-col justify-between py-1 flex-1 min-w-0">
         <div>
           <div className="flex justify-between items-start gap-2">
-            <h4 className="font-display font-bold text-base truncate">{coach.full_name}</h4>
+            <div className="flex items-center gap-1 min-w-0">
+              <h4 className="font-display font-bold text-base truncate">{coach.full_name}</h4>
+              {coach.verified && (
+                <CheckCircle className="size-4 text-green-600 shrink-0" />
+              )}
+            </div>
             <span className="flex items-center gap-1 text-xs font-bold shrink-0">
               <Star className="size-3.5 fill-amber-400 text-amber-400" />
               {coach.rating?.toFixed(1) ?? "—"}

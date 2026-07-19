@@ -6,7 +6,7 @@ import { SportChip } from "@/components/SportChip";
 import { CoachCard, type CoachCardData } from "@/components/CoachCard";
 import { AcademyCard, type AcademyCardData } from "@/components/AcademyCard";
 import { useState } from "react";
-import { Bell, Search, MapPin } from "lucide-react";
+import { Bell, Search, MapPin, BarChart3, TrendingUp, Calendar, Wallet, BookOpen } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/home")({
   component: Home,
@@ -15,6 +15,22 @@ export const Route = createFileRoute("/_authenticated/home")({
 function Home() {
   const { user } = useAuth();
   const [sport, setSport] = useState<string | null>(null);
+
+  // Get user profile to check role
+  const profileQ = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   const sportsQ = useQuery({
     queryKey: ["sports"],
@@ -58,18 +74,204 @@ function Home() {
     },
   });
 
-  const firstName = user?.user_metadata?.full_name?.split(" ")?.[0] ?? "بطلنا";
+  // Coach bookings
+  const coachBookingsQ = useQuery({
+    queryKey: ["coach_bookings", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("coach_id", user.id)
+        .order("start_time", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id && profileQ.data?.primary_role === "coach",
+  });
 
+  // Coach earnings
+  const coachEarningsQ = useQuery({
+    queryKey: ["coach_earnings", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return { total: 0, pending: 0, completed: 0 };
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("price")
+        .eq("coach_id", user.id);
+      if (error) throw error;
+      
+      const total = (data ?? []).reduce((sum, b) => sum + (b.price || 0), 0);
+      return { total, pending: total * 0.2, completed: total * 0.8 };
+    },
+    enabled: !!user?.id && profileQ.data?.primary_role === "coach",
+  });
+
+  const role = profileQ.data?.primary_role;
+  const firstName = user?.user_metadata?.full_name?.split(" ")?.[0] ?? profileQ.data?.full_name?.split(" ")?.[0] ?? "بطلنا";
+
+  // ===== COACH DASHBOARD =====
+  if (role === "coach") {
+    // Check verification status
+    const verificationQ = useQuery({
+      queryKey: ["coach_verification", user?.id],
+      queryFn: async () => {
+        if (!user?.id) return null;
+        const { data, error } = await supabase
+          .from("coach_verifications")
+          .select("status")
+          .eq("coach_id", user.id)
+          .order("submitted_at", { ascending: false })
+          .limit(1)
+          .single();
+        if (error) return null;
+        return data;
+      },
+      enabled: !!user?.id,
+    });
+
+    const isVerified = coach?.verified;
+    const verificationStatus = verificationQ.data?.status;
+
+    return (
+      <div className="px-5 pt-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <p className="text-muted-foreground text-xs mb-1">مرحباً 👋</p>
+            <h1 className="font-display font-bold text-2xl">{firstName}</h1>
+            <p className="text-muted-foreground text-xs mt-1">لوحة المدرب</p>
+          </div>
+          <button className="size-11 rounded-full bg-surface flex items-center justify-center relative">
+            <Bell className="size-5" />
+            <span className="absolute top-2 left-2 size-2 rounded-full bg-primary" />
+          </button>
+        </div>
+
+        {/* Verification Banner */}
+        {!isVerified && verificationStatus === "pending" && (
+          <div className="rounded-3xl border border-amber-300/30 bg-amber-50/50 p-4 mb-6">
+            <p className="text-sm font-bold text-amber-900 mb-2">⏳ قيد المراجعة</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              وثائقك قيد المراجعة. ستتلقى بريداً عند الموافقة
+            </p>
+            <Link
+              to="/coach-verification-status"
+              className="text-xs font-bold text-amber-600 hover:underline"
+            >
+              عرض التفاصيل →
+            </Link>
+          </div>
+        )}
+
+        {!isVerified && verificationStatus === "rejected" && (
+          <div className="rounded-3xl border border-red-300/30 bg-red-50/50 p-4 mb-6">
+            <p className="text-sm font-bold text-red-900 mb-2">❌ تم رفض الطلب</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              يمكنك إعادة تقديم وثائقك
+            </p>
+            <Link
+              to="/coach-verification"
+              className="inline-block text-xs font-bold text-red-600 hover:underline"
+            >
+              إعادة المحاولة →
+            </Link>
+          </div>
+        )}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <Link
+            to="/coach-dashboard"
+            className="h-24 bg-gradient-to-br from-primary/10 to-cyan-500/10 rounded-3xl p-4 flex flex-col justify-between surface-lift hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="size-4 text-primary" />
+              <span className="text-xs text-muted-foreground">الحجوزات القادمة</span>
+            </div>
+            <div>
+              <p className="font-display font-bold text-2xl">{coachBookingsQ.data?.length ?? 0}</p>
+              <p className="text-xs text-muted-foreground">جلسة</p>
+            </div>
+          </Link>
+
+          <Link
+            to="/earnings"
+            className="h-24 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-3xl p-4 flex flex-col justify-between surface-lift hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <Wallet className="size-4 text-green-600" />
+              <span className="text-xs text-muted-foreground">إجمالي الأرباح</span>
+            </div>
+            <div>
+              <p className="font-display font-bold text-2xl">{coachEarningsQ.data?.total?.toLocaleString() ?? 0}</p>
+              <p className="text-xs text-muted-foreground">ر.س</p>
+            </div>
+          </Link>
+
+          <Link
+            to="/coach-availability"
+            className="h-24 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-3xl p-4 flex flex-col justify-between surface-lift hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <BookOpen className="size-4 text-blue-600" />
+              <span className="text-xs text-muted-foreground">مواعيدي</span>
+            </div>
+            <div>
+              <p className="font-display font-bold text-2xl">5</p>
+              <p className="text-xs text-muted-foreground">متاح</p>
+            </div>
+          </Link>
+
+          <Link
+            to="/analytics"
+            className="h-24 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-3xl p-4 flex flex-col justify-between surface-lift hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <BarChart3 className="size-4 text-purple-600" />
+              <span className="text-xs text-muted-foreground">الإحصائيات</span>
+            </div>
+            <div>
+              <p className="font-display font-bold text-2xl">4.8</p>
+              <p className="text-xs text-muted-foreground">تقييمي</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-surface rounded-3xl p-4 mb-6">
+          <h2 className="font-display font-bold text-lg mb-3">الإجراءات السريعة</h2>
+          <div className="space-y-2">
+            <Link
+              to="/coach-dashboard"
+              className="h-12 rounded-2xl bg-primary text-primary-foreground font-display font-bold flex items-center justify-center hover:shadow-lg hover:shadow-primary/30 transition-all"
+            >
+              إدارة الحجوزات
+            </Link>
+            <Link
+              to="/coach-availability"
+              className="h-12 rounded-2xl bg-background border border-border font-display font-bold flex items-center justify-center hover:bg-surface transition-all"
+            >
+              تحديث المواعيد
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ===== PLAYER/ACADEMY DEFAULT DASHBOARD =====
   return (
     <div className="px-5 pt-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <p className="text-muted-foreground text-xs mb-1">مرحباً 👋</p>
-          <h1 className="font-display font-bold text-xl">{firstName}</h1>
+          <h1 className="font-display font-bold text-2xl">{firstName}</h1>
           <p className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
             <MapPin className="size-3" />
-            الرياض
+            {profileQ.data?.city || "الرياض"}
           </p>
         </div>
         <button className="size-11 rounded-full bg-surface flex items-center justify-center relative">
@@ -81,10 +283,10 @@ function Home() {
       {/* Search bar */}
       <Link
         to="/search"
-        className="flex items-center gap-3 h-14 bg-surface rounded-2xl px-4 mb-6 text-muted-foreground text-sm"
+        className="flex items-center gap-3 h-12 bg-surface rounded-2xl px-4 mb-6 text-muted-foreground text-sm"
       >
         <Search className="size-5" />
-        ابحث عن مدرب، رياضة، أو أكاديمية...
+        ابحث عن مدرب أو أكاديمية...
       </Link>
 
       {/* Hero card */}
@@ -94,27 +296,32 @@ function Home() {
           <h3 className="font-display font-bold text-2xl mt-1 leading-tight">خصم ٢٠٪ على أول حجز</h3>
           <p className="text-xs opacity-90 mt-2">استخدم كود ATHLETE20</p>
         </div>
-        <img
-          src="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400"
-          alt=""
-          className="absolute left-0 bottom-0 top-0 w-1/2 object-cover opacity-40 mix-blend-overlay"
-        />
       </div>
 
-      <Link to="/academy-dashboard" className="animate-rise flex items-center justify-between rounded-[24px] border border-border/70 bg-card/95 p-4 mb-6 shadow-sm surface-lift">
+      {/* Academy Dashboard Link - for players interested in management */}
+      <Link
+        to="/academy-dashboard"
+        className="animate-rise flex items-center justify-between rounded-[24px] border border-border/70 bg-card/95 p-4 mb-6 shadow-sm surface-lift"
+      >
         <div>
-          <p className="text-[10px] text-primary font-bold">لوحة أكاديمية</p>
-          <h3 className="font-display font-bold text-sm mt-1">إدارة الجلسات والمدربين والإيرادات</h3>
+          <p className="text-[10px] text-primary font-bold">قسم الإدارة</p>
+          <h3 className="font-display font-bold text-sm mt-1">إدارة الجلسات والإيرادات</h3>
         </div>
-        <span className="text-sm font-bold text-primary">فتح</span>
+        <span className="text-sm font-bold text-primary">→</span>
       </Link>
 
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <Link to="/coach-dashboard" className="rounded-[24px] border border-border/70 bg-card/95 p-4 shadow-sm surface-lift">
-          <p className="text-[10px] text-primary font-bold">لوحة المدرب</p>
-          <p className="font-display font-bold text-sm mt-1">إدارة الحجوزات</p>
+        <Link
+          to="/bookings"
+          className="rounded-[24px] border border-border/70 bg-card/95 p-4 shadow-sm surface-lift"
+        >
+          <p className="text-[10px] text-primary font-bold">حجوزاتي</p>
+          <p className="font-display font-bold text-sm mt-1">الجلسات المحجوزة</p>
         </Link>
-        <Link to="/booking-flow" className="rounded-[24px] border border-border/70 bg-card/95 p-4 shadow-sm surface-lift">
+        <Link
+          to="/booking-flow"
+          className="rounded-[24px] border border-border/70 bg-card/95 p-4 shadow-sm surface-lift"
+        >
           <p className="text-[10px] text-primary font-bold">حجز جديد</p>
           <p className="font-display font-bold text-sm mt-1">ابدأ جلسة جديدة</p>
         </Link>
