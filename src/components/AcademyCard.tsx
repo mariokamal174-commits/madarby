@@ -14,13 +14,13 @@ export function AcademyCard({ academy }: { academy: AcademyCardData }) {
     <Link
       to="/academies/$id"
       params={{ id: academy.id }}
-      className="shrink-0 w-56 rounded-3xl overflow-hidden bg-surface border border-transparent hover:border-primary/20 active:scale-[0.99] transition-all"
+      className="group shrink-0 w-56 overflow-hidden rounded-[24px] border border-border/70 bg-card/95 shadow-sm surface-lift active:scale-[0.99]"
     >
       <div className="relative h-32 bg-neutral-200">
         {academy.cover_url ? (
           <img src={academy.cover_url} alt={academy.name_ar} className="w-full h-full object-cover" loading="lazy" />
         ) : null}
-        <div className="absolute top-2 left-2 bg-background/95 backdrop-blur rounded-lg px-2 py-1 flex items-center gap-1 text-xs font-bold">
+        <div className="absolute top-2 left-2 rounded-lg bg-background/95 px-2 py-1 backdrop-blur flex items-center gap-1 text-xs font-bold">
           <Star className="size-3 fill-amber-400 text-amber-400" />
           {academy.rating?.toFixed(1) ?? "—"}
         </div>

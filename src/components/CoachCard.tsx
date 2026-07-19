@@ -16,14 +16,15 @@ export function CoachCard({ coach }: { coach: CoachCardData }) {
     <Link
       to="/coaches/$id"
       params={{ id: coach.id }}
-      className="flex gap-4 p-4 bg-surface rounded-3xl border border-transparent hover:border-primary/20 transition-all active:scale-[0.99]"
+      className="group relative flex gap-4 overflow-hidden rounded-[24px] border border-border/70 bg-card/95 p-4 shadow-sm surface-lift active:scale-[0.99]"
     >
-      <div className="size-24 rounded-2xl bg-neutral-200 shrink-0 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/8 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="relative size-24 shrink-0 overflow-hidden rounded-[18px] bg-neutral-200">
         {coach.avatar_url ? (
           <img src={coach.avatar_url} alt={coach.full_name} className="w-full h-full object-cover" loading="lazy" />
         ) : null}
       </div>
-      <div className="flex flex-col justify-between py-1 flex-1 min-w-0">
+      <div className="relative flex flex-col justify-between py-1 flex-1 min-w-0">
         <div>
           <div className="flex justify-between items-start gap-2">
             <h4 className="font-display font-bold text-base truncate">{coach.full_name}</h4>

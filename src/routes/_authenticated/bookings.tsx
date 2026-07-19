@@ -28,7 +28,12 @@ function Bookings() {
 
   return (
     <div className="px-5 pt-6">
-      <h1 className="font-display font-bold text-2xl mb-6">حجوزاتي</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="font-display font-bold text-2xl">حجوزاتي</h1>
+        <Link to="/booking-flow" className="rounded-2xl bg-primary px-3 py-2 text-[11px] font-bold text-primary-foreground">
+          حجز جديد
+        </Link>
+      </div>
       {q.isLoading && <p className="text-center text-muted-foreground py-8 text-sm">جارٍ التحميل...</p>}
       {q.data?.length === 0 && (
         <div className="text-center py-16">

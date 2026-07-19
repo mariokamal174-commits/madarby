@@ -14,17 +14,18 @@ export function BottomNav() {
   return (
     <nav className="fixed bottom-0 inset-x-0 z-50 pointer-events-none">
       <div className="mx-auto max-w-[430px] px-3 pb-3 pointer-events-auto">
-        <div className="bg-background/95 backdrop-blur-xl border border-border rounded-2xl shadow-lg px-2 py-2 flex justify-between items-center">
+        <div className="glass-card rounded-[20px] px-2 py-2 flex justify-between items-center">
           {items.map(({ to, label, icon: Icon }) => {
             const active = pathname === to || pathname.startsWith(to + "/");
             return (
               <Link
                 key={to}
                 to={to}
-                className={`flex flex-col items-center gap-1 flex-1 py-1.5 rounded-xl transition-colors ${
-                  active ? "text-primary" : "text-muted-foreground"
+                className={`relative flex flex-col items-center gap-1 flex-1 py-2 rounded-xl transition-all duration-200 ${
+                  active ? "text-primary bg-primary/10 scale-[1.02]" : "text-muted-foreground"
                 }`}
               >
+                {active ? <span className="absolute inset-x-3 top-1 h-0.5 rounded-full bg-primary" /> : null}
                 <Icon className="size-5" strokeWidth={active ? 2.5 : 2} />
                 <span className="text-[10px] font-bold">{label}</span>
               </Link>

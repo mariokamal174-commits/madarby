@@ -88,7 +88,7 @@ function Home() {
       </Link>
 
       {/* Hero card */}
-      <div className="relative rounded-3xl overflow-hidden bg-primary text-primary-foreground p-6 mb-8 h-40">
+      <div className="animate-soft-glow relative h-40 overflow-hidden rounded-[28px] bg-gradient-to-br from-primary via-blue-600 to-cyan-500 p-6 text-primary-foreground mb-4">
         <div className="relative z-10 max-w-[60%]">
           <span className="text-[10px] font-bold uppercase opacity-80">عرض خاص</span>
           <h3 className="font-display font-bold text-2xl mt-1 leading-tight">خصم ٢٠٪ على أول حجز</h3>
@@ -99,6 +99,25 @@ function Home() {
           alt=""
           className="absolute left-0 bottom-0 top-0 w-1/2 object-cover opacity-40 mix-blend-overlay"
         />
+      </div>
+
+      <Link to="/academy-dashboard" className="animate-rise flex items-center justify-between rounded-[24px] border border-border/70 bg-card/95 p-4 mb-6 shadow-sm surface-lift">
+        <div>
+          <p className="text-[10px] text-primary font-bold">لوحة أكاديمية</p>
+          <h3 className="font-display font-bold text-sm mt-1">إدارة الجلسات والمدربين والإيرادات</h3>
+        </div>
+        <span className="text-sm font-bold text-primary">فتح</span>
+      </Link>
+
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <Link to="/coach-dashboard" className="rounded-[24px] border border-border/70 bg-card/95 p-4 shadow-sm surface-lift">
+          <p className="text-[10px] text-primary font-bold">لوحة المدرب</p>
+          <p className="font-display font-bold text-sm mt-1">إدارة الحجوزات</p>
+        </Link>
+        <Link to="/booking-flow" className="rounded-[24px] border border-border/70 bg-card/95 p-4 shadow-sm surface-lift">
+          <p className="text-[10px] text-primary font-bold">حجز جديد</p>
+          <p className="font-display font-bold text-sm mt-1">ابدأ جلسة جديدة</p>
+        </Link>
       </div>
 
       {/* Sports chips */}

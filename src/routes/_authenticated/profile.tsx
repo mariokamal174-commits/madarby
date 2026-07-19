@@ -1,7 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Heart, Settings, HelpCircle, Star, ChevronLeft } from "lucide-react";
+import { LogOut, Heart, Settings, HelpCircle, Star, ChevronLeft, Building2, BarChart3, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: Profile,
@@ -23,6 +23,12 @@ function Profile() {
     { icon: Star, label: "تقييماتي" },
     { icon: Settings, label: "الإعدادات" },
     { icon: HelpCircle, label: "المساعدة" },
+  ];
+
+  const shortcuts = [
+    { to: "/academy-dashboard", label: "لوحة الأكاديمية", icon: Building2 },
+    { to: "/analytics", label: "التحليلات", icon: BarChart3 },
+    { to: "/admin-dashboard", label: "الإدارة", icon: ShieldCheck },
   ];
 
   return (
@@ -52,6 +58,21 @@ function Profile() {
             <ChevronLeft className="size-4 text-muted-foreground" />
           </button>
         ))}
+      </div>
+
+      <div className="rounded-3xl border border-border bg-surface p-4 mb-6">
+        <h3 className="font-display font-bold text-sm mb-3">اختصارات الإدارة</h3>
+        <div className="grid grid-cols-1 gap-2">
+          {shortcuts.map(({ to, label, icon: Icon }) => (
+            <Link key={to} to={to as any} className="flex items-center justify-between rounded-2xl bg-background px-3 py-3">
+              <div className="flex items-center gap-2">
+                <Icon className="size-4 text-primary" />
+                <span className="font-display font-bold text-sm">{label}</span>
+              </div>
+              <ChevronLeft className="size-4 text-muted-foreground" />
+            </Link>
+          ))}
+        </div>
       </div>
 
       <button
