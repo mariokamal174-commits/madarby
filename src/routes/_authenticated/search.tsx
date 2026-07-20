@@ -218,28 +218,3 @@ function SearchPage() {
     </PhoneShell>
   );
 }
-    <div className="px-5 pt-6">
-      <h1 className="font-display font-bold text-2xl mb-4">اكتشف</h1>
-      <div className="relative mb-6">
-        <Search className="absolute right-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="ابحث عن مدرب أو مدينة..."
-          className="w-full h-14 bg-surface rounded-2xl pr-12 pl-4 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/30"
-        />
-      </div>
-      <div className="flex flex-col gap-3">
-        {results.isLoading && (
-          <div className="text-center text-muted-foreground py-8 text-sm">جارٍ البحث...</div>
-        )}
-        {results.data?.length === 0 && (
-          <div className="text-center text-muted-foreground py-16 text-sm">لا توجد نتائج</div>
-        )}
-        {results.data?.map((c) => (
-          <CoachCard key={c.id} coach={c} />
-        ))}
-      </div>
-    </div>
-  );
-}
