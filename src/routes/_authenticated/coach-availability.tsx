@@ -23,28 +23,29 @@ function CoachAvailability() {
   const [day, setDay] = useState("الاثنين");
   const [time, setTime] = useState("19:00");
   const [price, setPrice] = useState("300");
-  const [type, setType] = useState<CoachAvailabilitySlot["type"]>("available");
   const [recurring, setRecurring] = useState(true);
 
   const coachProfileQ = useQuery({
     queryKey: ["coach-profile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data, error } = await supabase.from("coaches").select("id, price_per_session").eq("id", user.id).single();
+      const { data, error } = await supabase.from("coaches").select("id, price_per_session").eq("user_id", user.id).single();
       if (error) throw error;
       return data;
     },
     enabled: !!user?.id,
   });
 
+  const coachId = coachProfileQ.data?.id;
+
   const availabilityQ = useQuery({
-    queryKey: ["coach_availability", user?.id],
+    queryKey: ["coach_availability", coachId],
     queryFn: async () => {
-      if (!user?.id) return [] as CoachAvailabilitySlot[];
+      if (!coachId) return [] as CoachAvailabilitySlot[];
       const { data, error } = await supabase
         .from("coach_availability")
         .select("id, day_of_week, start_time, end_time")
-        .eq("coach_id", user.id)
+        .eq("coach_id", coachId)
         .order("day_of_week")
         .order("start_time");
       if (error) throw error;
@@ -60,7 +61,7 @@ function CoachAvailability() {
         price: Number(coachProfileQ.data?.price_per_session ?? 0),
       }));
     },
-    enabled: !!user?.id,
+    enabled: !!coachId,
   });
 
   const slots = availabilityQ.data ?? [];
@@ -73,7 +74,7 @@ function CoachAvailability() {
   }, [slots]);
 
   async function addSlot() {
-    if (!day || !time || !user?.id) return;
+    if (!day || !time || !coachId) return;
     const parsedPrice = Number(price);
     const normalized = Number.isFinite(parsedPrice) ? parsedPrice : 0;
 
@@ -82,19 +83,19 @@ function CoachAvailability() {
       const end = addMinutes(start, 60);
 
       const { error } = await supabase.from("coach_availability").insert({
-        coach_id: user.id,
+        coach_id: coachId,
         day_of_week: dayNameToNumber(day),
         start_time: `${start}:00`,
         end_time: `${end}:00`,
       });
       if (error) throw error;
 
-      const { error: priceError } = await supabase.from("coaches").update({ price_per_session: normalized }).eq("id", user.id);
+      const { error: priceError } = await supabase.from("coaches").update({ price_per_session: normalized }).eq("id", coachId);
       if (priceError) throw priceError;
 
       toast.success("تم حفظ الجلسة والسعر في الخلفية");
-      queryClient.invalidateQueries({ queryKey: ["coach_availability", user.id] });
-      queryClient.invalidateQueries({ queryKey: ["coach-profile", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["coach_availability", coachId] });
+      queryClient.invalidateQueries({ queryKey: ["coach-profile", coachId] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "فشل حفظ الجلسة");
     }
@@ -165,20 +166,23 @@ function CoachAvailability() {
           <h2 className="font-display font-bold text-base">إضافة نافذة جديدة</h2>
         </div>
         <div className="space-y-3">
-          <input value={day} onChange={(e) => setDay(e.target.value)} className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm" placeholder="اليوم" />
-          <input value={time} onChange={(e) => setTime(e.target.value)} className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm" placeholder="الوقت" />
-          <input value={price} onChange={(e) => setPrice(e.target.value)} type="number" min="0" inputMode="numeric" className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm" placeholder="سعر الجلسة (ج.م)" />
-          <select value={type} onChange={(e) => setType(e.target.value as CoachAvailabilitySlot["type"])} className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm">
-            <option value="available">متاح</option>
-            <option value="blocked">محجوب</option>
-            <option value="vacation">إجازة</option>
+          <select value={day} onChange={(e) => setDay(e.target.value)} className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm">
+            <option value="الأحد">الأحد</option>
+            <option value="الاثنين">الاثنين</option>
+            <option value="الثلاثاء">الثلاثاء</option>
+            <option value="الأربعاء">الأربعاء</option>
+            <option value="الخميس">الخميس</option>
+            <option value="الجمعة">الجمعة</option>
+            <option value="السبت">السبت</option>
           </select>
+          <input value={time} onChange={(e) => setTime(e.target.value)} type="time" className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm" />
+          <input value={price} onChange={(e) => setPrice(e.target.value)} type="number" min="0" inputMode="numeric" className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm" placeholder="سعر الجلسة (ج.م)" />
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <input type="checkbox" checked={recurring} onChange={() => setRecurring((value) => !value)} />
             تكرار أسبوعي
           </label>
           <button onClick={addSlot} className="flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground w-full">
-            <PlusCircle className="size-4" /> إضافة نافذة
+            <PlusCircle className="size-4" /> إضافة نافذة متاحة
           </button>
         </div>
       </div>
