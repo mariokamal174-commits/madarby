@@ -227,6 +227,42 @@ export type Database = {
           },
         ]
       }
+      coach_verifications: {
+        Row: {
+          certificates: Json
+          coach_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          reviewed_at: string | null
+          status: string
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          certificates?: Json
+          coach_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          certificates?: Json
+          coach_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coaches: {
         Row: {
           approved: boolean
@@ -328,6 +364,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_preferences: {
+        Row: {
+          created_at: string
+          favorite_sports: string[]
+          fitness_goals: string | null
+          id: string
+          level: string | null
+          player_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          favorite_sports?: string[]
+          fitness_goals?: string | null
+          id?: string
+          level?: string | null
+          player_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          favorite_sports?: string[]
+          fitness_goals?: string | null
+          id?: string
+          level?: string | null
+          player_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
