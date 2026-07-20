@@ -97,7 +97,7 @@ function CoachDetail() {
 
       <div className="fixed bottom-24 inset-x-0 z-40 pointer-events-none">
         <div className="mx-auto max-w-[430px] px-5 pointer-events-auto">
-          <Link to="/booking-flow" className="flex h-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground font-display font-bold text-base shadow-xl shadow-primary/40">
+          <Link to="/booking-flow" search={{ coach: id }} className="flex h-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground font-display font-bold text-base shadow-xl shadow-primary/40">
             احجز الآن
           </Link>
         </div>
