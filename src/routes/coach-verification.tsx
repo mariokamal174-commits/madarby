@@ -102,7 +102,6 @@ function CoachVerification() {
         .insert({
           coach_id: user.id,
           certificates: certUrls,
-          license_card_url: licenseData.publicUrl,
           status: "pending",
           submitted_at: new Date().toISOString(),
         });

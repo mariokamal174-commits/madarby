@@ -195,13 +195,7 @@ function SearchPage() {
           {searchType === "coaches" && (
             <div className="space-y-3">
               {(results.data as CoachCardData[])?.map((coach) => (
-                <CoachCard
-                  key={coach.id}
-                  coach={coach}
-                  onBook={() => {
-                    // Navigate to booking flow with coach pre-selected
-                  }}
-                />
+                <CoachCard key={coach.id} coach={coach} />
               ))}
             </div>
           )}
