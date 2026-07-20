@@ -147,28 +147,60 @@ function Home() {
   const role = profileQ.data?.primary_role;
   const firstName = user?.user_metadata?.full_name?.split(" ")?.[0] ?? profileQ.data?.full_name?.split(" ")?.[0] ?? "بطلنا";
 
+  // Verification status for coaches (always declare hook; enable only for coaches)
+  const verificationQ = useQuery({
+    queryKey: ["coach_verification", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("coach_verifications")
+        .select("status")
+        .eq("coach_id", user.id)
+        .order("submitted_at", { ascending: false })
+        .limit(1)
+        .single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!user?.id && role === "coach",
+  });
+
+  const verificationStatus = (verificationQ.data as { status?: string } | null)?.status;
+  const isVerified = verificationStatus === "approved";
+
+  // Recommended coaches for player (declare at top-level; enable only for players)
+  const recommendedCoachesQ = useQuery({
+    queryKey: ["recommended_coaches", playerPrefsQ.data?.favorite_sports?.[0]],
+    queryFn: async () => {
+      let q = supabase
+        .from("coaches")
+        .select("id, full_name, title_ar, avatar_url, rating, price_per_session, city")
+        .eq("approved", true)
+        .eq("verified", true)
+        .order("rating", { ascending: false })
+        .limit(5);
+
+      if (playerPrefsQ.data?.favorite_sports?.[0]) {
+        const { data: linked } = await supabase
+          .from("coach_sports")
+          .select("coach_id")
+          .eq("sport_id", playerPrefsQ.data.favorite_sports[0]);
+        const ids = (linked ?? []).map((r) => r.coach_id);
+        if (ids.length > 0) {
+          q = q.in("id", ids);
+        }
+      }
+
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as CoachCardData[];
+    },
+    enabled: !!playerPrefsQ.data && role === "player",
+  });
+
   // ===== COACH DASHBOARD =====
   if (role === "coach") {
-    // Check verification status
-    const verificationQ = useQuery({
-      queryKey: ["coach_verification", user?.id],
-      queryFn: async () => {
-        if (!user?.id) return null;
-        const { data, error } = await supabase
-          .from("coach_verifications")
-          .select("status")
-          .eq("coach_id", user.id)
-          .order("submitted_at", { ascending: false })
-          .limit(1)
-          .single();
-        if (error) return null;
-        return data;
-      },
-      enabled: !!user?.id,
-    });
-
-    const verificationStatus = (verificationQ.data as { status?: string } | null)?.status;
-    const isVerified = verificationStatus === "approved";
+    // verification status and flags are provided by top-level hooks
 
     return (
       <div className="px-5 pt-6">
@@ -302,35 +334,7 @@ function Home() {
     const upcomingBookings = playerBookingsQ.data?.filter((b: any) => isBookingUpcoming(b) && b.status !== "cancelled") || [];
     const completedBookings = playerBookingsQ.data?.filter((b: any) => b.status === "completed") || [];
 
-    // Recommended coaches for player
-    const recommendedCoachesQ = useQuery({
-      queryKey: ["recommended_coaches", playerPrefsQ.data?.favorite_sports?.[0]],
-      queryFn: async () => {
-        let q = supabase
-          .from("coaches")
-          .select("id, full_name, title_ar, avatar_url, rating, price_per_session, city")
-          .eq("approved", true)
-          .eq("verified", true)
-          .order("rating", { ascending: false })
-          .limit(5);
-        
-        if (playerPrefsQ.data?.favorite_sports?.[0]) {
-          const { data: linked } = await supabase
-            .from("coach_sports")
-            .select("coach_id")
-            .eq("sport_id", playerPrefsQ.data.favorite_sports[0]);
-          const ids = (linked ?? []).map((r) => r.coach_id);
-          if (ids.length > 0) {
-            q = q.in("id", ids);
-          }
-        }
-        
-        const { data, error } = await q;
-        if (error) throw error;
-        return data as CoachCardData[];
-      },
-      enabled: !!playerPrefsQ.data,
-    });
+    // recommended coaches query declared at top-level (enabled for players)
 
     return (
       <div className="px-5 pt-6 pb-28">
