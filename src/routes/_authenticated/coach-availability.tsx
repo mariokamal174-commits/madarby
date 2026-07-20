@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, PlusCircle, Trash2, PencilLine } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ function CoachAvailability() {
   const [time, setTime] = useState("19:00");
   const [price, setPrice] = useState("300");
   const [recurring, setRecurring] = useState(true);
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
   const coachProfileQ = useQuery({
     queryKey: ["coach-profile", user?.id],
@@ -37,6 +38,13 @@ function CoachAvailability() {
   });
 
   const coachId = coachProfileQ.data?.id;
+
+  useEffect(() => {
+    if (coachProfileQ.data?.price_per_session !== undefined) {
+      setCurrentPrice(coachProfileQ.data.price_per_session);
+      setPrice(String(coachProfileQ.data.price_per_session));
+    }
+  }, [coachProfileQ.data?.price_per_session]);
 
   const availabilityQ = useQuery({
     queryKey: ["coach_availability", coachId],
@@ -58,7 +66,7 @@ function CoachAvailability() {
         recurring: true,
         available: row.end_time && row.end_time > row.start_time,
         type: row.end_time && row.end_time > row.start_time ? "available" : "blocked",
-        price: Number(coachProfileQ.data?.price_per_session ?? 0),
+        price: currentPrice ?? 0,
       }));
     },
     enabled: !!coachId,
@@ -90,24 +98,26 @@ function CoachAvailability() {
       });
       if (error) throw error;
 
-      const { error: priceError } = await supabase.from("coaches").update({ price_per_session: normalized }).eq("id", coachId);
+      const { error: priceError } = await supabase.from("coaches").update({ price_per_session: normalized }).eq("user_id", user?.id);
       if (priceError) throw priceError;
+      setCurrentPrice(normalized);
+      setPrice(String(normalized));
 
-      toast.success("تم حفظ الجلسة والسعر في الخلفية");
+      toast.success("تم حفظ النافذة وتحديث سعر الجلسة");
       queryClient.invalidateQueries({ queryKey: ["coach_availability", coachId] });
-      queryClient.invalidateQueries({ queryKey: ["coach-profile", coachId] });
+      queryClient.invalidateQueries({ queryKey: ["coach-profile", user?.id] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "فشل حفظ الجلسة");
     }
   }
 
   async function removeSlot(id: string) {
-    if (!user?.id) return;
+    if (!coachId) return;
     try {
-      const { error } = await supabase.from("coach_availability").delete().eq("id", id).eq("coach_id", user.id);
+      const { error } = await supabase.from("coach_availability").delete().eq("id", id).eq("coach_id", coachId);
       if (error) throw error;
       toast.success("تم حذف النافذة");
-      queryClient.invalidateQueries({ queryKey: ["coach_availability", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["coach_availability", coachId] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "فشل حذف النافذة");
     }
@@ -166,6 +176,11 @@ function CoachAvailability() {
           <h2 className="font-display font-bold text-base">إضافة نافذة جديدة</h2>
         </div>
         <div className="space-y-3">
+          <div className="rounded-2xl border border-border bg-background p-3">
+            <p className="text-sm font-semibold text-foreground">السعر الحالي للجلسة</p>
+            <p className="mt-2 text-lg font-bold text-primary">{currentPrice ? `${currentPrice} ج.م` : "لم يتم ضبط السعر بعد"}</p>
+            <p className="mt-1 text-xs text-muted-foreground">يمكنك تغيير السعر هنا وسيتم حفظه كالسعر الافتراضي للجلسات.</p>
+          </div>
           <select value={day} onChange={(e) => setDay(e.target.value)} className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm">
             <option value="الأحد">الأحد</option>
             <option value="الاثنين">الاثنين</option>
@@ -176,13 +191,26 @@ function CoachAvailability() {
             <option value="السبت">السبت</option>
           </select>
           <input value={time} onChange={(e) => setTime(e.target.value)} type="time" className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm" />
-          <input value={price} onChange={(e) => setPrice(e.target.value)} type="number" min="0" inputMode="numeric" className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm" placeholder="سعر الجلسة (ج.م)" />
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-foreground">سعر الجلسة (ج.م)</label>
+            <input
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              type="number"
+              min="0"
+              step="50"
+              inputMode="numeric"
+              className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm"
+              placeholder="مثال: 500"
+            />
+            <p className="mt-2 text-xs text-muted-foreground">اكتب السعر الذي تريد أن يعرض لكل جلسة جديدة.</p>
+          </div>
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <input type="checkbox" checked={recurring} onChange={() => setRecurring((value) => !value)} />
             تكرار أسبوعي
           </label>
           <button onClick={addSlot} className="flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground w-full">
-            <PlusCircle className="size-4" /> إضافة نافذة متاحة
+            <PlusCircle className="size-4" /> حفظ النافذة والسعر
           </button>
         </div>
       </div>
