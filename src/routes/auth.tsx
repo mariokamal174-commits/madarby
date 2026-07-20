@@ -116,6 +116,7 @@ function AuthPage() {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/home`,
+            captcha: false,
             data: {
               full_name: fullName,
               primary_role: role,
@@ -136,6 +137,14 @@ function AuthPage() {
         // In that case inform the user to confirm their email instead of proceeding.
         if (!userId) {
           toast.success("تم إنشاء الحساب. تحقق من بريدك لتفعيل الحساب قبل تسجيل الدخول.");
+          try {
+            const { error: signinErr } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+            if (!signinErr) {
+              navigate({ to: "/onboarding-complete" });
+              setLoading(false);
+              return;
+            }
+          } catch {}
           navigate({ to: "/check-email" });
           setLoading(false);
           return;

@@ -8,10 +8,13 @@
   NOTE: This script uses the service_role key and therefore MUST be run locally in a safe environment (never commit the key).
 */
 
-const fs = require('fs');
-const path = require('path');
-const { createClient } = require('@supabase/supabase-js');
-const argv = require('minimist')(process.argv.slice(2));
+import fs from 'fs/promises';
+import { existsSync } from 'fs';
+import path from 'path';
+import { createClient } from '@supabase/supabase-js';
+import minimist from 'minimist';
+
+const argv = minimist(process.argv.slice(2));
 
 async function main() {
   const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -51,22 +54,22 @@ async function main() {
 
     // Upload files
     const uploaded = {};
-    if (avatarPath && fs.existsSync(avatarPath)) {
-      const avatarData = fs.readFileSync(avatarPath);
+    if (avatarPath && existsSync(avatarPath)) {
+      const avatarData = await fs.readFile(avatarPath);
       const dest = `${userId}/avatar/${Date.now()}-${path.basename(avatarPath)}`;
       const { error: upErr } = await supabase.storage.from('coach-documents').upload(dest, avatarData, { contentType: 'image/jpeg' });
       if (upErr) throw upErr;
       uploaded.avatar = supabase.storage.from('coach-documents').getPublicUrl(dest).data.publicUrl;
     }
-    if (certPath && fs.existsSync(certPath)) {
-      const certData = fs.readFileSync(certPath);
+    if (certPath && existsSync(certPath)) {
+      const certData = await fs.readFile(certPath);
       const dest = `${userId}/certs/${Date.now()}-${path.basename(certPath)}`;
       const { error: upErr } = await supabase.storage.from('coach-documents').upload(dest, certData, { contentType: 'image/jpeg' });
       if (upErr) throw upErr;
       uploaded.cert = supabase.storage.from('coach-documents').getPublicUrl(dest).data.publicUrl;
     }
-    if (licensePath && fs.existsSync(licensePath)) {
-      const licData = fs.readFileSync(licensePath);
+    if (licensePath && existsSync(licensePath)) {
+      const licData = await fs.readFile(licensePath);
       const dest = `${userId}/license/${Date.now()}-${path.basename(licensePath)}`;
       const { error: upErr } = await supabase.storage.from('coach-documents').upload(dest, licData, { contentType: 'image/jpeg' });
       if (upErr) throw upErr;
