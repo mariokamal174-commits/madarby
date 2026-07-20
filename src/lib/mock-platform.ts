@@ -27,6 +27,7 @@ export interface CoachAvailabilitySlot {
   recurring: boolean;
   available: boolean;
   type: "available" | "blocked" | "vacation";
+  price?: number;
 }
 
 export interface EarningsTransaction {

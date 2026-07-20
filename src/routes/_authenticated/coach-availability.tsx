@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, PlusCircle, Trash2, PencilLine } from "lucide-react";
-import { availabilitySeed, type CoachAvailabilitySlot } from "@/lib/mock-platform";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { type CoachAvailabilitySlot } from "@/lib/mock-platform";
 
 export const Route = createFileRoute("/_authenticated/coach-availability")({
   component: CoachAvailability,
@@ -14,11 +18,52 @@ const typeMeta: Record<CoachAvailabilitySlot["type"], { label: string; cls: stri
 };
 
 function CoachAvailability() {
-  const [slots, setSlots] = useState<CoachAvailabilitySlot[]>(() => availabilitySeed);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [day, setDay] = useState("الاثنين");
   const [time, setTime] = useState("19:00");
+  const [price, setPrice] = useState("300");
   const [type, setType] = useState<CoachAvailabilitySlot["type"]>("available");
   const [recurring, setRecurring] = useState(true);
+
+  const coachProfileQ = useQuery({
+    queryKey: ["coach-profile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase.from("coaches").select("id, price_per_session").eq("id", user.id).single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const availabilityQ = useQuery({
+    queryKey: ["coach_availability", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [] as CoachAvailabilitySlot[];
+      const { data, error } = await supabase
+        .from("coach_availability")
+        .select("id, day_of_week, start_time, end_time")
+        .eq("coach_id", user.id)
+        .order("day_of_week")
+        .order("start_time");
+      if (error) throw error;
+
+      const dayNames = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+      return (data ?? []).map((row: any) => ({
+        id: row.id,
+        day: dayNames[row.day_of_week] ?? "غير معروف",
+        time: row.start_time?.slice(0, 5) ?? "",
+        recurring: true,
+        available: row.end_time && row.end_time > row.start_time,
+        type: row.end_time && row.end_time > row.start_time ? "available" : "blocked",
+        price: Number(coachProfileQ.data?.price_per_session ?? 0),
+      }));
+    },
+    enabled: !!user?.id,
+  });
+
+  const slots = availabilityQ.data ?? [];
 
   const summary = useMemo(() => {
     const available = slots.filter((slot) => slot.type === "available").length;
@@ -27,17 +72,69 @@ function CoachAvailability() {
     return { available, blocked, vacations };
   }, [slots]);
 
-  function addSlot() {
-    if (!day || !time) return;
-    setSlots((current) => [{ id: crypto.randomUUID(), day, time, recurring, available: type === "available", type }, ...current]);
+  async function addSlot() {
+    if (!day || !time || !user?.id) return;
+    const parsedPrice = Number(price);
+    const normalized = Number.isFinite(parsedPrice) ? parsedPrice : 0;
+
+    try {
+      const start = time.slice(0, 5);
+      const end = addMinutes(start, 60);
+
+      const { error } = await supabase.from("coach_availability").insert({
+        coach_id: user.id,
+        day_of_week: dayNameToNumber(day),
+        start_time: `${start}:00`,
+        end_time: `${end}:00`,
+      });
+      if (error) throw error;
+
+      const { error: priceError } = await supabase.from("coaches").update({ price_per_session: normalized }).eq("id", user.id);
+      if (priceError) throw priceError;
+
+      toast.success("تم حفظ الجلسة والسعر في الخلفية");
+      queryClient.invalidateQueries({ queryKey: ["coach_availability", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["coach-profile", user.id] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "فشل حفظ الجلسة");
+    }
   }
 
-  function removeSlot(id: string) {
-    setSlots((current) => current.filter((slot) => slot.id !== id));
+  async function removeSlot(id: string) {
+    if (!user?.id) return;
+    try {
+      const { error } = await supabase.from("coach_availability").delete().eq("id", id).eq("coach_id", user.id);
+      if (error) throw error;
+      toast.success("تم حذف النافذة");
+      queryClient.invalidateQueries({ queryKey: ["coach_availability", user.id] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "فشل حذف النافذة");
+    }
   }
 
   function toggleSlot(id: string) {
-    setSlots((current) => current.map((slot) => (slot.id === id ? { ...slot, available: !slot.available, type: slot.available ? "blocked" : "available" } : slot)));
+    void removeSlot(id);
+  }
+
+  function addMinutes(timeValue: string, minutes: number) {
+    const [hours, mins] = timeValue.split(":").map(Number);
+    const total = hours * 60 + mins + minutes;
+    const nextHours = Math.floor(total / 60) % 24;
+    const nextMins = total % 60;
+    return `${String(nextHours).padStart(2, "0")}:${String(nextMins).padStart(2, "0")}`;
+  }
+
+  function dayNameToNumber(dayName: string) {
+    const mapping: Record<string, number> = {
+      الأحد: 0,
+      الاثنين: 1,
+      الثلاثاء: 2,
+      الأربعاء: 3,
+      الخميس: 4,
+      الجمعة: 5,
+      السبت: 6,
+    };
+    return mapping[dayName] ?? 0;
   }
 
   return (
@@ -70,6 +167,7 @@ function CoachAvailability() {
         <div className="space-y-3">
           <input value={day} onChange={(e) => setDay(e.target.value)} className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm" placeholder="اليوم" />
           <input value={time} onChange={(e) => setTime(e.target.value)} className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm" placeholder="الوقت" />
+          <input value={price} onChange={(e) => setPrice(e.target.value)} type="number" min="0" inputMode="numeric" className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm" placeholder="سعر الجلسة (ج.م)" />
           <select value={type} onChange={(e) => setType(e.target.value as CoachAvailabilitySlot["type"])} className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm">
             <option value="available">متاح</option>
             <option value="blocked">محجوب</option>
@@ -92,6 +190,9 @@ function CoachAvailability() {
               <div>
                 <p className="font-display font-bold text-sm">{slot.day} • {slot.time}</p>
                 <p className="text-xs text-muted-foreground">{slot.recurring ? "تكرار أسبوعي" : "مرة واحدة"}</p>
+                {typeof slot.price === "number" && slot.price > 0 && (
+                  <p className="mt-1 text-xs font-bold text-primary">{slot.price} ج.م</p>
+                )}
               </div>
               <span className={`rounded-full px-3 py-1 text-[10px] font-bold ${typeMeta[slot.type].cls}`}>{typeMeta[slot.type].label}</span>
             </div>
