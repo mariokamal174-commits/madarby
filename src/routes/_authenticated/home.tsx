@@ -437,6 +437,14 @@ function Home() {
 
   // ===== PLAYER/ACADEMY DEFAULT DASHBOARD =====
   return (
+    <div className="px-5 pt-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <p className="text-muted-foreground text-xs mb-1">مرحباً 👋</p>
+          <h1 className="font-display font-bold text-2xl">{profileQ.data?.full_name ?? ""}</h1>
+        </div>
+        <button className="size-11 rounded-full bg-surface flex items-center justify-center relative">
           <Bell className="size-5" />
           <span className="absolute top-2 left-2 size-2 rounded-full bg-primary" />
         </button>
