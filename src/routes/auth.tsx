@@ -4,7 +4,7 @@ import { PhoneShell } from "@/components/PhoneShell";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
-import { ArrowRight, Mail, Lock, User as UserIcon, Phone, Calendar, Zap, Award, MapPin } from "lucide-react";
+import { ArrowRight, Mail, Lock, User as UserIcon, Phone, Calendar, Zap, Award, MapPin, Upload, FileCheck, Image as ImageIcon } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -24,6 +24,9 @@ function AuthPage() {
   const [coachSpecialty, setCoachSpecialty] = useState<string>("");
   const [coachExperience, setCoachExperience] = useState("");
   const [coachLevel, setCoachLevel] = useState("بداية");
+  const [coachPhoto, setCoachPhoto] = useState<File | null>(null);
+  const [coachCertificates, setCoachCertificates] = useState<File[]>([]);
+  const [coachLicense, setCoachLicense] = useState<File | null>(null);
   const [playerAge, setPlayerAge] = useState("");
   const [playerLevel, setPlayerLevel] = useState("بداية");
   const [playerSport, setPlayerSport] = useState("");
@@ -40,6 +43,11 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        if (role === "coach") {
+          if (!coachPhoto) { toast.error("يجب رفع صورة شخصية"); setLoading(false); return; }
+          if (coachCertificates.length === 0) { toast.error("يجب رفع شهادة واحدة على الأقل"); setLoading(false); return; }
+          if (!coachLicense) { toast.error("يجب رفع كارنيه النقابة"); setLoading(false); return; }
+        }
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -60,8 +68,9 @@ function AuthPage() {
 
         // Create profile
         if (signUpData.user) {
+          const userId = signUpData.user.id;
           const { error: profileError } = await supabase.from("profiles").insert({
-            id: signUpData.user.id,
+            id: userId,
             full_name: fullName,
             phone,
             city,
@@ -71,25 +80,54 @@ function AuthPage() {
 
           // Create role-specific profile
           if (role === "coach") {
+            // Upload personal photo
+            let avatarUrl: string | null = null;
+            if (coachPhoto) {
+              const path = `${userId}/avatar/${Date.now()}-${coachPhoto.name}`;
+              const { error: upErr } = await supabase.storage.from("coach-documents").upload(path, coachPhoto);
+              if (upErr) throw upErr;
+              avatarUrl = supabase.storage.from("coach-documents").getPublicUrl(path).data.publicUrl;
+              await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", userId);
+            }
+
             const { error: coachError } = await supabase.from("coaches").insert({
-              user_id: signUpData.user.id,
+              user_id: userId,
               full_name: fullName,
               title_ar: coachSpecialty,
               city,
               experience_years: parseInt(coachExperience) || 0,
-              approved: true,
+              approved: false,
+              verified: false,
+              avatar_url: avatarUrl,
             });
             if (coachError) throw coachError;
+
+            // Upload certificates
+            const certUrls: string[] = [];
+            for (const cert of coachCertificates) {
+              const path = `${userId}/certs/${Date.now()}-${cert.name}`;
+              const { error: e } = await supabase.storage.from("coach-documents").upload(path, cert);
+              if (e) throw e;
+              certUrls.push(supabase.storage.from("coach-documents").getPublicUrl(path).data.publicUrl);
+            }
+            // Upload license
+            const licPath = `${userId}/license/${Date.now()}-${coachLicense!.name}`;
+            const { error: licErr } = await supabase.storage.from("coach-documents").upload(licPath, coachLicense!);
+            if (licErr) throw licErr;
+            const licenseUrl = supabase.storage.from("coach-documents").getPublicUrl(licPath).data.publicUrl;
+
+            const { error: vErr } = await supabase.from("coach_verifications").insert({
+              coach_id: userId,
+              certificates: certUrls,
+              license_card_url: licenseUrl,
+              status: "pending",
+            });
+            if (vErr) throw vErr;
           }
         }
 
         toast.success("تم إنشاء الحساب — تحقق من بريدك");
-        // Redirect coaches to verification page
-        if (role === "coach") {
-          navigate({ to: "/coach-verification" });
-        } else {
-          navigate({ to: "/onboarding-complete" });
-        }
+        navigate({ to: "/onboarding-complete" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -291,6 +329,72 @@ function AuthPage() {
                       <option value="متقدم">متقدم</option>
                       <option value="احترافي">احترافي</option>
                     </select>
+                  </div>
+
+                  {/* Personal photo */}
+                  <div>
+                    <p className="text-xs font-bold text-muted-foreground mb-2">📸 صورة شخصية</p>
+                    <label className="flex items-center justify-center w-full h-24 bg-surface border-2 border-dashed border-border rounded-2xl cursor-pointer hover:bg-background transition-colors">
+                      {coachPhoto ? (
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="size-4 text-green-600" />
+                          <span className="text-xs font-bold truncate max-w-[200px]">{coachPhoto.name}</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <Upload className="size-4 text-primary mb-1" />
+                          <p className="text-xs font-bold">ارفع صورتك الشخصية</p>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={(e) => e.target.files?.[0] && setCoachPhoto(e.target.files[0])} />
+                    </label>
+                  </div>
+
+                  {/* Certificates */}
+                  <div>
+                    <p className="text-xs font-bold text-muted-foreground mb-2">📜 صور الشهادات</p>
+                    <label className="flex flex-col items-center justify-center w-full h-24 bg-surface border-2 border-dashed border-border rounded-2xl cursor-pointer hover:bg-background transition-colors">
+                      <Upload className="size-4 text-primary mb-1" />
+                      <p className="text-xs font-bold">
+                        {coachCertificates.length > 0 ? `${coachCertificates.length} شهادة مرفقة` : "أضف الشهادات"}
+                      </p>
+                      <input type="file" multiple accept="image/*" className="hidden"
+                        onChange={(e) => e.target.files && setCoachCertificates([...coachCertificates, ...Array.from(e.target.files)])} />
+                    </label>
+                    {coachCertificates.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {coachCertificates.map((f, i) => (
+                          <div key={i} className="flex items-center justify-between bg-surface rounded-xl px-3 py-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileCheck className="size-3 text-green-600 shrink-0" />
+                              <span className="text-[11px] truncate">{f.name}</span>
+                            </div>
+                            <button type="button" onClick={() => setCoachCertificates(coachCertificates.filter((_, x) => x !== i))} className="text-[11px] text-red-600 font-bold">حذف</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* License card */}
+                  <div>
+                    <p className="text-xs font-bold text-muted-foreground mb-2">🏢 كارنيه النقابة</p>
+                    <label className="flex items-center justify-center w-full h-24 bg-surface border-2 border-dashed border-border rounded-2xl cursor-pointer hover:bg-background transition-colors">
+                      {coachLicense ? (
+                        <div className="flex items-center gap-2">
+                          <FileCheck className="size-4 text-green-600" />
+                          <span className="text-xs font-bold truncate max-w-[200px]">{coachLicense.name}</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <Upload className="size-4 text-primary mb-1" />
+                          <p className="text-xs font-bold">ارفع كارنيه النقابة</p>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={(e) => e.target.files?.[0] && setCoachLicense(e.target.files[0])} />
+                    </label>
                   </div>
                 </>
               )}

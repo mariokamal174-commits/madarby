@@ -233,6 +233,7 @@ export type Database = {
           coach_id: string
           created_at: string
           id: string
+          license_card_url: string | null
           notes: string | null
           reviewed_at: string | null
           status: string
@@ -244,6 +245,7 @@ export type Database = {
           coach_id: string
           created_at?: string
           id?: string
+          license_card_url?: string | null
           notes?: string | null
           reviewed_at?: string | null
           status?: string
@@ -255,6 +257,7 @@ export type Database = {
           coach_id?: string
           created_at?: string
           id?: string
+          license_card_url?: string | null
           notes?: string | null
           reviewed_at?: string | null
           status?: string
