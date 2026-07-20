@@ -9,50 +9,44 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PlayerOnboardingRouteImport } from './routes/player-onboarding'
-import { Route as OnboardingCompleteRouteImport } from './routes/onboarding-complete'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as CoachVerificationRouteImport } from './routes/coach-verification'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
-import { Route as AuthenticatedReviewsRouteImport } from './routes/_authenticated/reviews'
-import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
-import { Route as AuthenticatedPlayerProfileRouteImport } from './routes/_authenticated/player-profile'
-import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
-import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
-import { Route as AuthenticatedEarningsRouteImport } from './routes/_authenticated/earnings'
-import { Route as AuthenticatedCoachVerificationStatusRouteImport } from './routes/_authenticated/coach-verification-status'
-import { Route as AuthenticatedCoachDashboardRouteImport } from './routes/_authenticated/coach-dashboard'
-import { Route as AuthenticatedCoachAvailabilityRouteImport } from './routes/_authenticated/coach-availability'
-import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
-import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
-import { Route as AuthenticatedBookingFlowRouteImport } from './routes/_authenticated/booking-flow'
-import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin-dashboard'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CoachVerificationRouteImport } from './routes/coach-verification'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as OnboardingCompleteRouteImport } from './routes/onboarding-complete'
+import { Route as PlayerOnboardingRouteImport } from './routes/player-onboarding'
 import { Route as AuthenticatedAcademyDashboardRouteImport } from './routes/_authenticated/academy-dashboard'
-import { Route as AuthenticatedCoachesIdRouteImport } from './routes/_authenticated/coaches.$id'
+import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin-dashboard'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedBookingFlowRouteImport } from './routes/_authenticated/booking-flow'
+import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
+import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedCoachAvailabilityRouteImport } from './routes/_authenticated/coach-availability'
+import { Route as AuthenticatedCoachDashboardRouteImport } from './routes/_authenticated/coach-dashboard'
+import { Route as AuthenticatedCoachVerificationStatusRouteImport } from './routes/_authenticated/coach-verification-status'
+import { Route as AuthenticatedEarningsRouteImport } from './routes/_authenticated/earnings'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedPlayerProfileRouteImport } from './routes/_authenticated/player-profile'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedReviewsRouteImport } from './routes/_authenticated/reviews'
+import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
 import { Route as AuthenticatedAcademiesIdRouteImport } from './routes/_authenticated/academies.$id'
+import { Route as AuthenticatedCoachesIdRouteImport } from './routes/_authenticated/coaches.$id'
+import { Route as AuthenticatedProfileEditRouteImport } from './routes/_authenticated/profile.edit'
+import { Route as AuthenticatedProfileFavoritesRouteImport } from './routes/_authenticated/profile.favorites'
+import { Route as AuthenticatedProfilePaymentRouteImport } from './routes/_authenticated/profile.payment'
+import { Route as AuthenticatedProfileSettingsRouteImport } from './routes/_authenticated/profile.settings'
+import { Route as AuthenticatedProfileSupportRouteImport } from './routes/_authenticated/profile.support'
 
-const PlayerOnboardingRoute = PlayerOnboardingRouteImport.update({
-  id: '/player-onboarding',
-  path: '/player-onboarding',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OnboardingCompleteRoute = OnboardingCompleteRouteImport.update({
-  id: '/onboarding-complete',
-  path: '/onboarding-complete',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CoachVerificationRoute = CoachVerificationRouteImport.update({
-  id: '/coach-verification',
-  path: '/coach-verification',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -60,78 +54,41 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const CoachVerificationRoute = CoachVerificationRouteImport.update({
+  id: '/coach-verification',
+  path: '/coach-verification',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const OnboardingCompleteRoute = OnboardingCompleteRouteImport.update({
+  id: '/onboarding-complete',
+  path: '/onboarding-complete',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedReviewsRoute = AuthenticatedReviewsRouteImport.update({
-  id: '/reviews',
-  path: '/reviews',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const PlayerOnboardingRoute = PlayerOnboardingRouteImport.update({
+  id: '/player-onboarding',
+  path: '/player-onboarding',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPlayerProfileRoute =
-  AuthenticatedPlayerProfileRouteImport.update({
-    id: '/player-profile',
-    path: '/player-profile',
+const AuthenticatedAcademyDashboardRoute =
+  AuthenticatedAcademyDashboardRouteImport.update({
+    id: '/academy-dashboard',
+    path: '/academy-dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedNotificationsRoute =
-  AuthenticatedNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
+const AuthenticatedAdminDashboardRoute =
+  AuthenticatedAdminDashboardRouteImport.update({
+    id: '/admin-dashboard',
+    path: '/admin-dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
-  id: '/home',
-  path: '/home',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedEarningsRoute = AuthenticatedEarningsRouteImport.update({
-  id: '/earnings',
-  path: '/earnings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedCoachVerificationStatusRoute =
-  AuthenticatedCoachVerificationStatusRouteImport.update({
-    id: '/coach-verification-status',
-    path: '/coach-verification-status',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedCoachDashboardRoute =
-  AuthenticatedCoachDashboardRouteImport.update({
-    id: '/coach-dashboard',
-    path: '/coach-dashboard',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedCoachAvailabilityRoute =
-  AuthenticatedCoachAvailabilityRouteImport.update({
-    id: '/coach-availability',
-    path: '/coach-availability',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedBookingsRoute = AuthenticatedBookingsRouteImport.update({
-  id: '/bookings',
-  path: '/bookings',
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedBookingFlowRoute =
@@ -140,26 +97,69 @@ const AuthenticatedBookingFlowRoute =
     path: '/booking-flow',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
+const AuthenticatedBookingsRoute = AuthenticatedBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminDashboardRoute =
-  AuthenticatedAdminDashboardRouteImport.update({
-    id: '/admin-dashboard',
-    path: '/admin-dashboard',
+const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCoachAvailabilityRoute =
+  AuthenticatedCoachAvailabilityRouteImport.update({
+    id: '/coach-availability',
+    path: '/coach-availability',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAcademyDashboardRoute =
-  AuthenticatedAcademyDashboardRouteImport.update({
-    id: '/academy-dashboard',
-    path: '/academy-dashboard',
+const AuthenticatedCoachDashboardRoute =
+  AuthenticatedCoachDashboardRouteImport.update({
+    id: '/coach-dashboard',
+    path: '/coach-dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedCoachesIdRoute = AuthenticatedCoachesIdRouteImport.update({
-  id: '/coaches/$id',
-  path: '/coaches/$id',
+const AuthenticatedCoachVerificationStatusRoute =
+  AuthenticatedCoachVerificationStatusRouteImport.update({
+    id: '/coach-verification-status',
+    path: '/coach-verification-status',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEarningsRoute = AuthenticatedEarningsRouteImport.update({
+  id: '/earnings',
+  path: '/earnings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlayerProfileRoute =
+  AuthenticatedPlayerProfileRouteImport.update({
+    id: '/player-profile',
+    path: '/player-profile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReviewsRoute = AuthenticatedReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAcademiesIdRoute =
@@ -167,6 +167,41 @@ const AuthenticatedAcademiesIdRoute =
     id: '/academies/$id',
     path: '/academies/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCoachesIdRoute = AuthenticatedCoachesIdRouteImport.update({
+  id: '/coaches/$id',
+  path: '/coaches/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfileEditRoute =
+  AuthenticatedProfileEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AuthenticatedProfileRoute,
+  } as any)
+const AuthenticatedProfileFavoritesRoute =
+  AuthenticatedProfileFavoritesRouteImport.update({
+    id: '/favorites',
+    path: '/favorites',
+    getParentRoute: () => AuthenticatedProfileRoute,
+  } as any)
+const AuthenticatedProfilePaymentRoute =
+  AuthenticatedProfilePaymentRouteImport.update({
+    id: '/payment',
+    path: '/payment',
+    getParentRoute: () => AuthenticatedProfileRoute,
+  } as any)
+const AuthenticatedProfileSettingsRoute =
+  AuthenticatedProfileSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedProfileRoute,
+  } as any)
+const AuthenticatedProfileSupportRoute =
+  AuthenticatedProfileSupportRouteImport.update({
+    id: '/support',
+    path: '/support',
+    getParentRoute: () => AuthenticatedProfileRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -189,11 +224,16 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/player-profile': typeof AuthenticatedPlayerProfileRoute
-  '/profile': typeof AuthenticatedProfileRoute
+  '/profile': typeof AuthenticatedProfileRouteWithChildren
   '/reviews': typeof AuthenticatedReviewsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/academies/$id': typeof AuthenticatedAcademiesIdRoute
   '/coaches/$id': typeof AuthenticatedCoachesIdRoute
+  '/profile/edit': typeof AuthenticatedProfileEditRoute
+  '/profile/favorites': typeof AuthenticatedProfileFavoritesRoute
+  '/profile/payment': typeof AuthenticatedProfilePaymentRoute
+  '/profile/settings': typeof AuthenticatedProfileSettingsRoute
+  '/profile/support': typeof AuthenticatedProfileSupportRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -215,11 +255,16 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/player-profile': typeof AuthenticatedPlayerProfileRoute
-  '/profile': typeof AuthenticatedProfileRoute
+  '/profile': typeof AuthenticatedProfileRouteWithChildren
   '/reviews': typeof AuthenticatedReviewsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/academies/$id': typeof AuthenticatedAcademiesIdRoute
   '/coaches/$id': typeof AuthenticatedCoachesIdRoute
+  '/profile/edit': typeof AuthenticatedProfileEditRoute
+  '/profile/favorites': typeof AuthenticatedProfileFavoritesRoute
+  '/profile/payment': typeof AuthenticatedProfilePaymentRoute
+  '/profile/settings': typeof AuthenticatedProfileSettingsRoute
+  '/profile/support': typeof AuthenticatedProfileSupportRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -243,11 +288,16 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/player-profile': typeof AuthenticatedPlayerProfileRoute
-  '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRouteWithChildren
   '/_authenticated/reviews': typeof AuthenticatedReviewsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/academies/$id': typeof AuthenticatedAcademiesIdRoute
   '/_authenticated/coaches/$id': typeof AuthenticatedCoachesIdRoute
+  '/_authenticated/profile/edit': typeof AuthenticatedProfileEditRoute
+  '/_authenticated/profile/favorites': typeof AuthenticatedProfileFavoritesRoute
+  '/_authenticated/profile/payment': typeof AuthenticatedProfilePaymentRoute
+  '/_authenticated/profile/settings': typeof AuthenticatedProfileSettingsRoute
+  '/_authenticated/profile/support': typeof AuthenticatedProfileSupportRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -276,6 +326,11 @@ export interface FileRouteTypes {
     | '/search'
     | '/academies/$id'
     | '/coaches/$id'
+    | '/profile/edit'
+    | '/profile/favorites'
+    | '/profile/payment'
+    | '/profile/settings'
+    | '/profile/support'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -302,6 +357,11 @@ export interface FileRouteTypes {
     | '/search'
     | '/academies/$id'
     | '/coaches/$id'
+    | '/profile/edit'
+    | '/profile/favorites'
+    | '/profile/payment'
+    | '/profile/settings'
+    | '/profile/support'
   id:
     | '__root__'
     | '/'
@@ -329,6 +389,11 @@ export interface FileRouteTypes {
     | '/_authenticated/search'
     | '/_authenticated/academies/$id'
     | '/_authenticated/coaches/$id'
+    | '/_authenticated/profile/edit'
+    | '/_authenticated/profile/favorites'
+    | '/_authenticated/profile/payment'
+    | '/_authenticated/profile/settings'
+    | '/_authenticated/profile/support'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -343,39 +408,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/player-onboarding': {
-      id: '/player-onboarding'
-      path: '/player-onboarding'
-      fullPath: '/player-onboarding'
-      preLoaderRoute: typeof PlayerOnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding-complete': {
-      id: '/onboarding-complete'
-      path: '/onboarding-complete'
-      fullPath: '/onboarding-complete'
-      preLoaderRoute: typeof OnboardingCompleteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/coach-verification': {
-      id: '/coach-verification'
-      path: '/coach-verification'
-      fullPath: '/coach-verification'
-      preLoaderRoute: typeof CoachVerificationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -385,109 +422,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/search': {
-      id: '/_authenticated/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof AuthenticatedSearchRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/coach-verification': {
+      id: '/coach-verification'
+      path: '/coach-verification'
+      fullPath: '/coach-verification'
+      preLoaderRoute: typeof CoachVerificationRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/reviews': {
-      id: '/_authenticated/reviews'
-      path: '/reviews'
-      fullPath: '/reviews'
-      preLoaderRoute: typeof AuthenticatedReviewsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/profile': {
-      id: '/_authenticated/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AuthenticatedProfileRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/onboarding-complete': {
+      id: '/onboarding-complete'
+      path: '/onboarding-complete'
+      fullPath: '/onboarding-complete'
+      preLoaderRoute: typeof OnboardingCompleteRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/player-profile': {
-      id: '/_authenticated/player-profile'
-      path: '/player-profile'
-      fullPath: '/player-profile'
-      preLoaderRoute: typeof AuthenticatedPlayerProfileRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/player-onboarding': {
+      id: '/player-onboarding'
+      path: '/player-onboarding'
+      fullPath: '/player-onboarding'
+      preLoaderRoute: typeof PlayerOnboardingRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/notifications': {
-      id: '/_authenticated/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/home': {
-      id: '/_authenticated/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof AuthenticatedHomeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/earnings': {
-      id: '/_authenticated/earnings'
-      path: '/earnings'
-      fullPath: '/earnings'
-      preLoaderRoute: typeof AuthenticatedEarningsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/coach-verification-status': {
-      id: '/_authenticated/coach-verification-status'
-      path: '/coach-verification-status'
-      fullPath: '/coach-verification-status'
-      preLoaderRoute: typeof AuthenticatedCoachVerificationStatusRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/coach-dashboard': {
-      id: '/_authenticated/coach-dashboard'
-      path: '/coach-dashboard'
-      fullPath: '/coach-dashboard'
-      preLoaderRoute: typeof AuthenticatedCoachDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/coach-availability': {
-      id: '/_authenticated/coach-availability'
-      path: '/coach-availability'
-      fullPath: '/coach-availability'
-      preLoaderRoute: typeof AuthenticatedCoachAvailabilityRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/chat': {
-      id: '/_authenticated/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof AuthenticatedChatRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/bookings': {
-      id: '/_authenticated/bookings'
-      path: '/bookings'
-      fullPath: '/bookings'
-      preLoaderRoute: typeof AuthenticatedBookingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/booking-flow': {
-      id: '/_authenticated/booking-flow'
-      path: '/booking-flow'
-      fullPath: '/booking-flow'
-      preLoaderRoute: typeof AuthenticatedBookingFlowRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/analytics': {
-      id: '/_authenticated/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+    '/_authenticated/academy-dashboard': {
+      id: '/_authenticated/academy-dashboard'
+      path: '/academy-dashboard'
+      fullPath: '/academy-dashboard'
+      preLoaderRoute: typeof AuthenticatedAcademyDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin-dashboard': {
@@ -497,18 +471,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/academy-dashboard': {
-      id: '/_authenticated/academy-dashboard'
-      path: '/academy-dashboard'
-      fullPath: '/academy-dashboard'
-      preLoaderRoute: typeof AuthenticatedAcademyDashboardRouteImport
+    '/_authenticated/analytics': {
+      id: '/_authenticated/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/coaches/$id': {
-      id: '/_authenticated/coaches/$id'
-      path: '/coaches/$id'
-      fullPath: '/coaches/$id'
-      preLoaderRoute: typeof AuthenticatedCoachesIdRouteImport
+    '/_authenticated/booking-flow': {
+      id: '/_authenticated/booking-flow'
+      path: '/booking-flow'
+      fullPath: '/booking-flow'
+      preLoaderRoute: typeof AuthenticatedBookingFlowRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bookings': {
+      id: '/_authenticated/bookings'
+      path: '/bookings'
+      fullPath: '/bookings'
+      preLoaderRoute: typeof AuthenticatedBookingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chat': {
+      id: '/_authenticated/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AuthenticatedChatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/coach-availability': {
+      id: '/_authenticated/coach-availability'
+      path: '/coach-availability'
+      fullPath: '/coach-availability'
+      preLoaderRoute: typeof AuthenticatedCoachAvailabilityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/coach-dashboard': {
+      id: '/_authenticated/coach-dashboard'
+      path: '/coach-dashboard'
+      fullPath: '/coach-dashboard'
+      preLoaderRoute: typeof AuthenticatedCoachDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/coach-verification-status': {
+      id: '/_authenticated/coach-verification-status'
+      path: '/coach-verification-status'
+      fullPath: '/coach-verification-status'
+      preLoaderRoute: typeof AuthenticatedCoachVerificationStatusRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/earnings': {
+      id: '/_authenticated/earnings'
+      path: '/earnings'
+      fullPath: '/earnings'
+      preLoaderRoute: typeof AuthenticatedEarningsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/player-profile': {
+      id: '/_authenticated/player-profile'
+      path: '/player-profile'
+      fullPath: '/player-profile'
+      preLoaderRoute: typeof AuthenticatedPlayerProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reviews': {
+      id: '/_authenticated/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof AuthenticatedReviewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/search': {
+      id: '/_authenticated/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof AuthenticatedSearchRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/academies/$id': {
@@ -518,8 +576,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAcademiesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/coaches/$id': {
+      id: '/_authenticated/coaches/$id'
+      path: '/coaches/$id'
+      fullPath: '/coaches/$id'
+      preLoaderRoute: typeof AuthenticatedCoachesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile/edit': {
+      id: '/_authenticated/profile/edit'
+      path: '/edit'
+      fullPath: '/profile/edit'
+      preLoaderRoute: typeof AuthenticatedProfileEditRouteImport
+      parentRoute: typeof AuthenticatedProfileRoute
+    }
+    '/_authenticated/profile/favorites': {
+      id: '/_authenticated/profile/favorites'
+      path: '/favorites'
+      fullPath: '/profile/favorites'
+      preLoaderRoute: typeof AuthenticatedProfileFavoritesRouteImport
+      parentRoute: typeof AuthenticatedProfileRoute
+    }
+    '/_authenticated/profile/payment': {
+      id: '/_authenticated/profile/payment'
+      path: '/payment'
+      fullPath: '/profile/payment'
+      preLoaderRoute: typeof AuthenticatedProfilePaymentRouteImport
+      parentRoute: typeof AuthenticatedProfileRoute
+    }
+    '/_authenticated/profile/settings': {
+      id: '/_authenticated/profile/settings'
+      path: '/settings'
+      fullPath: '/profile/settings'
+      preLoaderRoute: typeof AuthenticatedProfileSettingsRouteImport
+      parentRoute: typeof AuthenticatedProfileRoute
+    }
+    '/_authenticated/profile/support': {
+      id: '/_authenticated/profile/support'
+      path: '/support'
+      fullPath: '/profile/support'
+      preLoaderRoute: typeof AuthenticatedProfileSupportRouteImport
+      parentRoute: typeof AuthenticatedProfileRoute
+    }
   }
 }
+
+interface AuthenticatedProfileRouteChildren {
+  AuthenticatedProfileEditRoute: typeof AuthenticatedProfileEditRoute
+  AuthenticatedProfileFavoritesRoute: typeof AuthenticatedProfileFavoritesRoute
+  AuthenticatedProfilePaymentRoute: typeof AuthenticatedProfilePaymentRoute
+  AuthenticatedProfileSettingsRoute: typeof AuthenticatedProfileSettingsRoute
+  AuthenticatedProfileSupportRoute: typeof AuthenticatedProfileSupportRoute
+}
+
+const AuthenticatedProfileRouteChildren: AuthenticatedProfileRouteChildren = {
+  AuthenticatedProfileEditRoute: AuthenticatedProfileEditRoute,
+  AuthenticatedProfileFavoritesRoute: AuthenticatedProfileFavoritesRoute,
+  AuthenticatedProfilePaymentRoute: AuthenticatedProfilePaymentRoute,
+  AuthenticatedProfileSettingsRoute: AuthenticatedProfileSettingsRoute,
+  AuthenticatedProfileSupportRoute: AuthenticatedProfileSupportRoute,
+}
+
+const AuthenticatedProfileRouteWithChildren =
+  AuthenticatedProfileRoute._addFileChildren(AuthenticatedProfileRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcademyDashboardRoute: typeof AuthenticatedAcademyDashboardRoute
@@ -535,7 +654,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPlayerProfileRoute: typeof AuthenticatedPlayerProfileRoute
-  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRouteWithChildren
   AuthenticatedReviewsRoute: typeof AuthenticatedReviewsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedAcademiesIdRoute: typeof AuthenticatedAcademiesIdRoute
@@ -557,7 +676,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPlayerProfileRoute: AuthenticatedPlayerProfileRoute,
-  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRouteWithChildren,
   AuthenticatedReviewsRoute: AuthenticatedReviewsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedAcademiesIdRoute: AuthenticatedAcademiesIdRoute,
@@ -579,3 +698,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

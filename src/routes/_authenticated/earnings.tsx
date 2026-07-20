@@ -32,10 +32,10 @@ function EarningsPage() {
 
       <div className="grid grid-cols-2 gap-3 mb-6">
         {[
-          { label: "إجمالي الإيرادات", value: `${totals.total} ر.س`, icon: Wallet },
-          { label: "مدفوعات معتمدة", value: `${totals.completed} ر.س`, icon: BadgeCheck },
-          { label: "معلقة", value: `${totals.pending} ر.س`, icon: CircleDollarSign },
-          { label: "عمولة المنصة", value: `${totals.commission} ر.س`, icon: TrendingUp },
+          { label: "إجمالي الإيرادات", value: `${totals.total} ج.م`, icon: Wallet },
+          { label: "مدفوعات معتمدة", value: `${totals.completed} ج.م`, icon: BadgeCheck },
+          { label: "معلقة", value: `${totals.pending} ج.م`, icon: CircleDollarSign },
+          { label: "عمولة المنصة", value: `${totals.commission} ج.م`, icon: TrendingUp },
         ].map((item) => {
           const Icon = item.icon;
           return (
@@ -104,9 +104,9 @@ function EarningsPage() {
               <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary">{transaction.status}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
-              <span>المبلغ: {transaction.amount} ر.س</span>
-              <span>العمولة: {transaction.commission} ر.س</span>
-              <span>الصافي: {transaction.net} ر.س</span>
+              <span>المبلغ: {transaction.amount} ج.م</span>
+              <span>العمولة: {transaction.commission} ج.م</span>
+              <span>الصافي: {transaction.net} ج.م</span>
             </div>
           </div>
         ))}

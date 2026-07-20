@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { CalendarDays, CheckCircle2, Clock3, Coins, Star, TrendingUp, Users, XCircle, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { BarChart, Bar, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { getBookingDisplayDate, getBookingDisplayTime, isBookingUpcoming } from "@/lib/bookings";
 
 export const Route = createFileRoute("/_authenticated/coach-dashboard")({
   component: CoachDashboard,
@@ -88,7 +89,7 @@ function CoachDashboard() {
   const now = new Date();
   const pendingBookings = bookings.filter((b: any) => b.status === "pending");
   const confirmedBookings = bookings.filter((b: any) => b.status === "confirmed");
-  const upcomingBookings = confirmedBookings.filter((b: any) => new Date(b.start_time) > now);
+  const upcomingBookings = bookings.filter((b: any) => isBookingUpcoming(b));
   const completedBookings = bookings.filter((b: any) => b.status === "completed");
   const totalEarnings = completedBookings.reduce((sum: number, b: any) => sum + (b.price || 0), 0);
   const monthlyEarnings = completedBookings
@@ -126,7 +127,7 @@ function CoachDashboard() {
         {[
           { label: "إجمالي الحجوزات", value: bookings.length, icon: CalendarDays },
           { label: "الجلسات القادمة", value: upcomingBookings.length, icon: Clock3 },
-          { label: "الأرباح الشهرية", value: `${monthlyEarnings.toLocaleString()} ر.س`, icon: Coins },
+          { label: "الأرباح الشهرية", value: `${monthlyEarnings.toLocaleString()} ج.م`, icon: Coins },
           { label: "التقييم", value: "4.8/5", icon: Star },
           { label: "طلبات قيد الانتظار", value: pendingBookings.length, icon: Users },
         ].map((item) => {
@@ -260,7 +261,7 @@ function CoachDashboard() {
         {completedBookings.length > 0 && (
           <div className="mt-4">
             <h3 className="text-xs font-bold text-green-600 uppercase mb-2">جلسات مكتملة ({completedBookings.length})</h3>
-            <p className="text-sm text-muted-foreground">إجمالي الأرباح: <span className="font-bold text-primary">{totalEarnings} ر.س</span></p>
+            <p className="text-sm text-muted-foreground">إجمالي الأرباح: <span className="font-bold text-primary">{totalEarnings} ج.م</span></p>
           </div>
         )}
 

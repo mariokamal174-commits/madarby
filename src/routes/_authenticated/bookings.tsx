@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PhoneShell } from "@/components/PhoneShell";
+import { getBookingDisplayDate, getBookingDisplayTime, isBookingUpcoming } from "@/lib/bookings";
 import { toast } from "sonner";
 import { Calendar, Clock, MapPin, User, Trash2, CheckCircle, AlertCircle, Star } from "lucide-react";
 import { useState } from "react";
@@ -68,13 +69,9 @@ function PlayerBookings() {
     },
   });
 
-  const upcomingBookings = bookingsQ.data?.filter(
-    (b: any) => b.status === "confirmed" && new Date(b.start_time) > new Date()
-  ) || [];
+  const upcomingBookings = bookingsQ.data?.filter((b: any) => isBookingUpcoming(b) && b.status !== "cancelled") || [];
 
-  const pastBookings = bookingsQ.data?.filter(
-    (b: any) => b.status === "completed" || (b.status === "confirmed" && new Date(b.start_time) <= new Date())
-  ) || [];
+  const pastBookings = bookingsQ.data?.filter((b: any) => !isBookingUpcoming(b) && b.status !== "cancelled") || [];
 
   const cancelledBookings = bookingsQ.data?.filter((b: any) => b.status === "cancelled") || [];
 
@@ -138,18 +135,11 @@ function PlayerBookings() {
                     <div className="space-y-2 text-xs mb-4">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Calendar className="size-4" />
-                        {new Date(booking.start_time).toLocaleDateString("ar-SA", {
-                          weekday: "long",
-                          month: "long",
-                          day: "numeric",
-                        })}
+                        {getBookingDisplayDate(booking)}
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="size-4" />
-                        {new Date(booking.start_time).toLocaleTimeString("ar-SA", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {getBookingDisplayTime(booking)}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-primary">
@@ -193,7 +183,7 @@ function PlayerBookings() {
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1 min-w-0">
                         <h4 className="font-display font-bold text-xs">{booking.coaches?.full_name}</h4>
-                        <p className="text-[10px] text-muted-foreground">{new Date(booking.start_time).toLocaleDateString("ar-SA")}</p>
+                        <p className="text-[10px] text-muted-foreground">{getBookingDisplayDate(booking)}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         {!booking.rating && (

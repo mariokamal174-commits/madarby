@@ -7,6 +7,7 @@ import { CoachCard, type CoachCardData } from "@/components/CoachCard";
 import { AcademyCard, type AcademyCardData } from "@/components/AcademyCard";
 import { useState } from "react";
 import { Bell, Search, MapPin, BarChart3, TrendingUp, Calendar, Wallet, BookOpen } from "lucide-react";
+import { getBookingDisplayDate, getBookingDisplayTime, isBookingUpcoming } from "@/lib/bookings";
 
 export const Route = createFileRoute("/_authenticated/home")({
   component: Home,
@@ -241,7 +242,7 @@ function Home() {
             </div>
             <div>
               <p className="font-display font-bold text-2xl">{coachEarningsQ.data?.total?.toLocaleString() ?? 0}</p>
-              <p className="text-xs text-muted-foreground">ر.س</p>
+              <p className="text-xs text-muted-foreground">ج.م</p>
             </div>
           </Link>
 
@@ -298,9 +299,7 @@ function Home() {
 
   // ===== PLAYER DASHBOARD =====
   if (role === "player") {
-    const upcomingBookings = playerBookingsQ.data?.filter(
-      (b: any) => b.status === "confirmed" && new Date(b.start_time) > new Date()
-    ) || [];
+    const upcomingBookings = playerBookingsQ.data?.filter((b: any) => isBookingUpcoming(b) && b.status !== "cancelled") || [];
     const completedBookings = playerBookingsQ.data?.filter((b: any) => b.status === "completed") || [];
 
     // Recommended coaches for player
@@ -450,10 +449,7 @@ function Home() {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    ⏰ {new Date(booking.start_time).toLocaleTimeString("ar-SA", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    ⏰ {getBookingDisplayTime(booking)}
                   </p>
                 </div>
               ))}

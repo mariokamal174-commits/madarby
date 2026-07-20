@@ -1,17 +1,41 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Users, Trophy, BarChart3, CreditCard, Gift, AlertCircle, TrendingUp, Check, X, Clock, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin-dashboard")({
   component: AdminDashboardPage,
 });
 
 function AdminDashboardPage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeSection, setActiveSection] = useState<"users" | "sports" | "bookings" | "payments" | "promotions" | "reports" | "complaints">("users");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const profileQ = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("primary_role")
+        .eq("id", user.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  useEffect(() => {
+    if (profileQ.data && profileQ.data.primary_role !== "admin") {
+      navigate({ to: "/home" });
+    }
+  }, [navigate, profileQ.data]);
 
   // Fetch pending coach verifications
   const verificationsQ = useQuery({

@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneShell } from "@/components/PhoneShell";
+import { getDefaultRouteForRole } from "@/lib/role-routing";
 import { CheckCircle, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/onboarding-complete")({
@@ -24,9 +25,10 @@ function OnboardingComplete() {
           .eq("id", data.user.id)
           .single();
 
-        // Redirect to appropriate onboarding
         if (profile?.primary_role === "player") {
           navigate({ to: "/player-onboarding" });
+        } else if (profile?.primary_role === "admin") {
+          navigate({ to: getDefaultRouteForRole(profile.primary_role) as any });
         }
       } else {
         navigate({ to: "/auth" });
@@ -38,7 +40,13 @@ function OnboardingComplete() {
 
   async function handleContinue() {
     try {
-      navigate({ to: "/home" });
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("primary_role")
+        .eq("id", user?.id)
+        .single();
+
+      navigate({ to: getDefaultRouteForRole(profile?.primary_role) as any });
     } catch (err) {
       console.error(err);
     }

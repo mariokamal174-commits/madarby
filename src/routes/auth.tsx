@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PhoneShell } from "@/components/PhoneShell";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { getDefaultRouteForRole } from "@/lib/role-routing";
 import { toast } from "sonner";
 import { ArrowRight, Mail, Lock, User as UserIcon, Phone, Calendar, Zap, Award, MapPin, Upload, FileCheck, Image as ImageIcon } from "lucide-react";
 
@@ -34,8 +35,16 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/home" });
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("primary_role")
+        .eq("id", data.session.user.id)
+        .single();
+
+      navigate({ to: getDefaultRouteForRole(profile?.primary_role) as any });
     });
   }, [navigate]);
 
@@ -56,22 +65,34 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        if (!email.trim() || !password.trim()) {
+          toast.error("يرجى إدخال البريد وكلمة المرور");
+          setLoading(false);
+          return;
+        }
+
+        if (password.length < 6) {
+          toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+          setLoading(false);
+          return;
+        }
+
         if (role === "coach") {
           if (!coachPhoto) { toast.error("يجب رفع صورة شخصية"); setLoading(false); return; }
           if (coachCertificates.length === 0) { toast.error("يجب رفع شهادة واحدة على الأقل"); setLoading(false); return; }
           if (!coachLicense) { toast.error("يجب رفع كارنيه النقابة"); setLoading(false); return; }
         }
+
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
+          email: email.trim(),
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/home`,
-            data: { 
+            data: {
               full_name: fullName,
               primary_role: role,
               phone,
               city,
-              // Role-specific data
               ...(role === "coach" && { specialty: coachSpecialty, experience: coachExperience, level: coachLevel }),
               ...(role === "player" && { age: playerAge, level: playerLevel, sport: playerSport }),
             },
@@ -79,31 +100,33 @@ function AuthPage() {
         });
         if (signUpError) throw signUpError;
 
-        // Create profile
-        if (signUpData.user) {
-          const userId = signUpData.user.id;
-          const { error: profileError } = await supabase.from("profiles").insert({
+        const userId = signUpData.user?.id;
+        if (userId) {
+          const { error: profileError } = await supabase.from("profiles").upsert({
             id: userId,
             full_name: fullName,
             phone,
             city,
             primary_role: role,
-          });
-          if (profileError) throw profileError;
+          }, { onConflict: "id" });
+          if (profileError) {
+            console.error("Profile upsert failed", profileError);
+          }
 
-          // Create role-specific profile
           if (role === "coach") {
-            // Upload personal photo
             let avatarUrl: string | null = null;
             if (coachPhoto) {
               const path = `${userId}/avatar/${Date.now()}-${coachPhoto.name}`;
               const { error: upErr } = await supabase.storage.from("coach-documents").upload(path, coachPhoto);
-              if (upErr) throw upErr;
-              avatarUrl = supabase.storage.from("coach-documents").getPublicUrl(path).data.publicUrl;
-              await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", userId);
+              if (upErr) {
+                console.error("Avatar upload failed", upErr);
+              } else {
+                avatarUrl = supabase.storage.from("coach-documents").getPublicUrl(path).data.publicUrl;
+                await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", userId);
+              }
             }
 
-            const { error: coachError } = await supabase.from("coaches").insert({
+            const { error: coachError } = await supabase.from("coaches").upsert({
               user_id: userId,
               full_name: fullName,
               title_ar: coachSpecialty,
@@ -112,42 +135,77 @@ function AuthPage() {
               approved: false,
               verified: false,
               avatar_url: avatarUrl,
-            });
-            if (coachError) throw coachError;
-
-            // Upload certificates
-            const certUrls: string[] = [];
-            for (const cert of coachCertificates) {
-              const path = `${userId}/certs/${Date.now()}-${cert.name}`;
-              const { error: e } = await supabase.storage.from("coach-documents").upload(path, cert);
-              if (e) throw e;
-              certUrls.push(supabase.storage.from("coach-documents").getPublicUrl(path).data.publicUrl);
+            }, { onConflict: "user_id" });
+            if (coachError) {
+              console.error("Coach upsert failed", coachError);
             }
-            // Upload license
-            const licPath = `${userId}/license/${Date.now()}-${coachLicense!.name}`;
-            const { error: licErr } = await supabase.storage.from("coach-documents").upload(licPath, coachLicense!);
-            if (licErr) throw licErr;
-            const licenseUrl = supabase.storage.from("coach-documents").getPublicUrl(licPath).data.publicUrl;
 
-            const { error: vErr } = await supabase.from("coach_verifications").insert({
-              coach_id: userId,
-              certificates: certUrls,
-              license_card_url: licenseUrl,
-              status: "pending",
-            });
-            if (vErr) throw vErr;
+            const { data: existingVerification } = await supabase
+              .from("coach_verifications")
+              .select("id")
+              .eq("coach_id", userId)
+              .limit(1)
+              .maybeSingle();
+
+            if (!existingVerification) {
+              const certUrls: string[] = [];
+              for (const cert of coachCertificates) {
+                const path = `${userId}/certs/${Date.now()}-${cert.name}`;
+                const { error: e } = await supabase.storage.from("coach-documents").upload(path, cert);
+                if (e) {
+                  console.error("Certificate upload failed", e);
+                  continue;
+                }
+                certUrls.push(supabase.storage.from("coach-documents").getPublicUrl(path).data.publicUrl);
+              }
+
+              if (coachLicense) {
+                const licPath = `${userId}/license/${Date.now()}-${coachLicense.name}`;
+                const { error: licErr } = await supabase.storage.from("coach-documents").upload(licPath, coachLicense);
+                if (licErr) {
+                  console.error("License upload failed", licErr);
+                } else {
+                  const licenseUrl = supabase.storage.from("coach-documents").getPublicUrl(licPath).data.publicUrl;
+                  const { error: vErr } = await supabase.from("coach_verifications").insert({
+                    coach_id: userId,
+                    certificates: certUrls,
+                    license_card_url: licenseUrl,
+                    status: "pending",
+                  });
+                  if (vErr) {
+                    console.error("Verification insert failed", vErr);
+                  }
+                }
+              }
+            }
           }
         }
 
-        toast.success("تم إنشاء الحساب — تحقق من بريدك");
+        toast.success("تم إنشاء الحساب بنجاح — راجع بريدك إذا كان التحقق مطلوبًا");
         navigate({ to: "/onboarding-complete" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/home" });
+
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("primary_role")
+          .eq("id", user?.id)
+          .single();
+
+        navigate({ to: getDefaultRouteForRole(profile?.primary_role) as any });
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "حدث خطأ");
+      const errorMessage = err instanceof Error
+        ? err.message
+        : "حدث خطأ أثناء معالجة الطلب";
+      const friendlyMessage = errorMessage.includes("Password")
+        ? "كلمة المرور غير مناسبة. جرّب كلمة مرور أطول من 6 أحرف."
+        : errorMessage.includes("already")
+          ? "هذا البريد مستخدم بالفعل"
+          : errorMessage;
+      toast.error(friendlyMessage);
     } finally {
       setLoading(false);
     }
