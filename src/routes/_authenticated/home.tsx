@@ -164,8 +164,8 @@ function Home() {
       enabled: !!user?.id,
     });
 
-    const isVerified = coach?.verified;
-    const verificationStatus = verificationQ.data?.status;
+    const verificationStatus = (verificationQ.data as { status?: string } | null)?.status;
+    const isVerified = verificationStatus === "approved";
 
     return (
       <div className="px-5 pt-6">
