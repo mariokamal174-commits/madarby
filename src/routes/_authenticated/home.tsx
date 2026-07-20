@@ -303,8 +303,38 @@ function Home() {
     ) || [];
     const completedBookings = playerBookingsQ.data?.filter((b: any) => b.status === "completed") || [];
 
+    // Recommended coaches for player
+    const recommendedCoachesQ = useQuery({
+      queryKey: ["recommended_coaches", playerPrefsQ.data?.favorite_sports?.[0]],
+      queryFn: async () => {
+        let q = supabase
+          .from("coaches")
+          .select("id, full_name, title_ar, avatar_url, rating, price_per_session, city")
+          .eq("approved", true)
+          .eq("verified", true)
+          .order("rating", { ascending: false })
+          .limit(5);
+        
+        if (playerPrefsQ.data?.favorite_sports?.[0]) {
+          const { data: linked } = await supabase
+            .from("coach_sports")
+            .select("coach_id")
+            .eq("sport_id", playerPrefsQ.data.favorite_sports[0]);
+          const ids = (linked ?? []).map((r) => r.coach_id);
+          if (ids.length > 0) {
+            q = q.in("id", ids);
+          }
+        }
+        
+        const { data, error } = await q;
+        if (error) throw error;
+        return data as CoachCardData[];
+      },
+      enabled: !!playerPrefsQ.data,
+    });
+
     return (
-      <div className="px-5 pt-6">
+      <div className="px-5 pt-6 pb-28">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -316,6 +346,15 @@ function Home() {
             <Bell className="size-5" />
             <span className="absolute top-2 left-2 size-2 rounded-full bg-primary" />
           </button>
+        </div>
+
+        {/* Today's Offers Banner */}
+        <div className="animate-soft-glow relative h-32 overflow-hidden rounded-[28px] bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 p-6 text-white mb-6">
+          <div className="relative z-10">
+            <p className="text-[10px] font-bold uppercase opacity-90">🎁 عرض اليوم</p>
+            <h3 className="font-display font-bold text-xl mt-1 leading-tight">خصم حتى 30٪ على جلستك الأولى</h3>
+            <p className="text-xs opacity-90 mt-2">استخدم كود FIRSTFIT</p>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -422,6 +461,23 @@ function Home() {
           </div>
         )}
 
+        {/* Recommended Coaches */}
+        {playerPrefsQ.data?.favorite_sports && recommendedCoachesQ.data && recommendedCoachesQ.data.length > 0 && (
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="font-display font-bold text-lg">⭐ مدربون مخصصين لك</h2>
+              <Link to="/search" className="text-primary text-xs font-bold">
+                عرض الكل
+              </Link>
+            </div>
+            <div className="flex flex-col gap-3">
+              {recommendedCoachesQ.data.slice(0, 3).map((c) => (
+                <CoachCard key={c.id} coach={c} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Search and Browse */}
         <div>
           <h2 className="font-display font-bold text-lg mb-3">ابحث عن مدرب جديد</h2>
@@ -497,6 +553,15 @@ function Home() {
           <p className="text-[10px] text-primary font-bold">حجز جديد</p>
           <p className="font-display font-bold text-sm mt-1">ابدأ جلسة جديدة</p>
         </Link>
+      </div>
+
+      {/* Today's Offers */}
+      <div className="animate-soft-glow relative h-32 overflow-hidden rounded-[28px] bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 p-6 text-white mb-6">
+        <div className="relative z-10">
+          <p className="text-[10px] font-bold uppercase opacity-90">🎁 عرض اليوم</p>
+          <h3 className="font-display font-bold text-xl mt-1 leading-tight">خصم حتى 30٪ على جلستك الأولى</h3>
+          <p className="text-xs opacity-90 mt-2">استخدم كود FIRSTFIT</p>
+        </div>
       </div>
 
       {/* Sports chips */}

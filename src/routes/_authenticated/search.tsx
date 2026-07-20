@@ -15,8 +15,11 @@ function SearchPage() {
   const [q, setQ] = useState("");
   const [selectedSport, setSelectedSport] = useState<string | null>(null);
   const [city, setCity] = useState("");
-  const [minRating, setMinRating] = useState(4.0);
+  const [minRating, setMinRating] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(500);
+  const [sessionType, setSessionType] = useState<string | null>(null);
   const [searchType, setSearchType] = useState<"coaches" | "academies">("coaches");
+  const [showFilters, setShowFilters] = useState(false);
 
   const sportsQ = useQuery({
     queryKey: ["sports"],
@@ -31,14 +34,15 @@ function SearchPage() {
   });
 
   const coachesQ = useQuery({
-    queryKey: ["search-coaches", q, selectedSport, city, minRating],
+    queryKey: ["search-coaches", q, selectedSport, city, minRating, maxPrice],
     queryFn: async () => {
       let query = supabase
         .from("coaches")
-        .select("id, full_name, title_ar, avatar_url, rating, price_per_session, city, verified")
+        .select("id, full_name, title_ar, avatar_url, rating, price_per_session, city")
         .eq("approved", true)
         .eq("verified", true)
         .gte("rating", minRating)
+        .lte("price_per_session", maxPrice)
         .order("rating", { ascending: false })
         .limit(30);
       
@@ -122,59 +126,101 @@ function SearchPage() {
           </button>
         </div>
 
-        {/* Filters */}
-        <div className="mb-4 space-y-3">
-          {/* City Filter */}
-          <input
-            type="text"
-            placeholder="المدينة"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            className="w-full h-10 rounded-xl bg-surface border border-border px-3 text-right text-xs placeholder:text-muted-foreground"
-          />
+        {/* Filters Toggle */}
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="w-full h-10 rounded-xl bg-surface border border-border font-bold text-xs flex items-center justify-center gap-2 mb-4 transition-all"
+        >
+          <Filter className="size-4" />
+          {showFilters ? "إخفاء الفلاتر" : "إظهار الفلاتر المتقدمة"}
+        </button>
 
+        {/* Advanced Filters */}
+        {showFilters && (
+          <div className="mb-4 p-4 rounded-2xl bg-surface border border-border space-y-3">
+            {/* City Filter */}
+            <div>
+              <label className="text-xs font-bold text-muted-foreground block mb-2">📍 المدينة</label>
+              <input
+                type="text"
+                placeholder="البحث بالمدينة"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="w-full h-9 rounded-lg bg-background border border-border px-3 text-right text-xs"
+              />
+            </div>
+
+            {/* Price Filter - Only for Coaches */}
+            {searchType === "coaches" && (
+              <div>
+                <label className="text-xs font-bold text-muted-foreground block mb-2">💰 السعر: حتى {maxPrice} ج.م</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1000"
+                  step="50"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(parseInt(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+            )}
+
+            {/* Rating Filter - Only for Coaches */}
+            {searchType === "coaches" && (
+              <div>
+                <label className="text-xs font-bold text-muted-foreground block mb-2">⭐ التقييم الأدنى: {minRating}</label>
+                <div className="flex gap-2">
+                  {[0, 3, 3.5, 4, 4.5, 5].map((rating) => (
+                    <button
+                      key={rating}
+                      onClick={() => setMinRating(rating)}
+                      className={`flex-1 h-8 rounded-lg text-xs font-bold transition-all ${
+                        minRating === rating
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-background border border-border"
+                      }`}
+                    >
+                      {rating === 0 ? "الكل" : rating}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Filters */}
+        <div className="mb-4 space-y-2">
           {/* Sport Filter - Only for Coaches */}
           {searchType === "coaches" && (
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              <button
-                onClick={() => setSelectedSport(null)}
-                className={`h-9 px-3 rounded-lg whitespace-nowrap font-bold text-xs transition-all shrink-0 ${
-                  selectedSport === null
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-surface border border-border"
-                }`}
-              >
-                الكل
-              </button>
-              {sportsQ.data?.map((sport: any) => (
+            <div>
+              <label className="text-xs font-bold text-muted-foreground block mb-2">🏆 الرياضة</label>
+              <div className="flex gap-2 overflow-x-auto pb-2">
                 <button
-                  key={sport.id}
-                  onClick={() => setSelectedSport(sport.id)}
+                  onClick={() => setSelectedSport(null)}
                   className={`h-9 px-3 rounded-lg whitespace-nowrap font-bold text-xs transition-all shrink-0 ${
-                    selectedSport === sport.id
+                    selectedSport === null
                       ? "bg-primary text-primary-foreground"
                       : "bg-surface border border-border"
                   }`}
                 >
-                  {sport.emoji} {sport.name_ar}
+                  الكل
                 </button>
-              ))}
-            </div>
-          )}
-
-          {/* Rating Filter - Only for Coaches */}
-          {searchType === "coaches" && (
-            <div>
-              <label className="text-xs text-muted-foreground block mb-2">التقييم الأدنى: {minRating}</label>
-              <input
-                type="range"
-                min="1"
-                max="5"
-                step="0.1"
-                value={minRating}
-                onChange={(e) => setMinRating(parseFloat(e.target.value))}
-                className="w-full"
-              />
+                {sportsQ.data?.map((sport: any) => (
+                  <button
+                    key={sport.id}
+                    onClick={() => setSelectedSport(sport.id)}
+                    className={`h-9 px-3 rounded-lg whitespace-nowrap font-bold text-xs transition-all shrink-0 ${
+                      selectedSport === sport.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-surface border border-border"
+                    }`}
+                  >
+                    {sport.emoji} {sport.name_ar}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PhoneShell } from "@/components/PhoneShell";
 import { toast } from "sonner";
-import { Calendar, Clock, MapPin, User, Trash2, CheckCircle, AlertCircle } from "lucide-react";
+import { Calendar, Clock, MapPin, User, Trash2, CheckCircle, AlertCircle, Star } from "lucide-react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/bookings")({
   component: PlayerBookings,
@@ -13,6 +14,8 @@ export const Route = createFileRoute("/_authenticated/bookings")({
 function PlayerBookings() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [ratingBookingId, setRatingBookingId] = useState<string | null>(null);
+  const [ratingValue, setRatingValue] = useState(5);
 
   const bookingsQ = useQuery({
     queryKey: ["player_bookings_detail", user?.id],
@@ -43,6 +46,25 @@ function PlayerBookings() {
     },
     onError: () => {
       toast.error("فشل إلغاء الحجز");
+    },
+  });
+
+  const ratingMutation = useMutation({
+    mutationFn: async ({ bookingId, rating }: { bookingId: string; rating: number }) => {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ rating, status: "completed" })
+        .eq("id", bookingId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("شكراً على تقييمك!");
+      setRatingBookingId(null);
+      setRatingValue(5);
+      queryClient.invalidateQueries({ queryKey: ["player_bookings_detail"] });
+    },
+    onError: () => {
+      toast.error("فشل حفظ التقييم");
     },
   });
 
@@ -166,24 +188,36 @@ function PlayerBookings() {
             <div className="space-y-2">
               {pastBookings
                 .filter((b: any) => b.status !== "cancelled")
-                .slice(0, 3)
                 .map((booking: any) => (
-                  <div
-                    key={booking.id}
-                    className="rounded-xl border border-border/50 bg-surface/50 p-3"
-                  >
-                    <div className="flex justify-between items-start">
+                  <div key={booking.id} className="rounded-xl border border-border/50 bg-surface/50 p-3">
+                    <div className="flex justify-between items-start mb-2">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-display font-bold text-xs">
-                          {booking.coaches?.full_name}
-                        </h4>
-                        <p className="text-[10px] text-muted-foreground">
-                          {new Date(booking.start_time).toLocaleDateString("ar-SA")}
-                        </p>
+                        <h4 className="font-display font-bold text-xs">{booking.coaches?.full_name}</h4>
+                        <p className="text-[10px] text-muted-foreground">{new Date(booking.start_time).toLocaleDateString("ar-SA")}</p>
                       </div>
-                      <span className="text-[10px] text-green-600 font-bold">
-                        ✓ مكتملة
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {!booking.rating && (
+                          <button
+                            onClick={() => setRatingBookingId(booking.id)}
+                            className="text-[10px] px-2 py-1 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary hover:text-primary-foreground transition-all"
+                          >
+                            قيّم
+                          </button>
+                        )}
+                        {booking.rating && (
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`size-3 ${
+                                  star <= booking.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <span className="text-[10px] text-green-600 font-bold">✓ مكتملة</span>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -234,6 +268,65 @@ function PlayerBookings() {
             >
               احجز الآن
             </Link>
+          </div>
+        )}
+
+        {/* Rating Modal */}
+        {ratingBookingId && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur z-50 flex items-end">
+            <div className="w-full bg-background rounded-t-3xl p-6 animate-in slide-in-from-bottom">
+              <h2 className="font-display font-bold text-xl mb-2">قيّم الجلسة</h2>
+              <p className="text-xs text-muted-foreground mb-6">شارك رأيك عن جودة الجلسة</p>
+
+              <div className="mb-6 p-4 rounded-2xl bg-surface border border-border">
+                <p className="text-xs text-muted-foreground mb-2">المدرب</p>
+                <p className="font-bold text-sm">
+                  {pastBookings.find((b: any) => b.id === ratingBookingId)?.coaches?.full_name}
+                </p>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-xs text-muted-foreground mb-3">التقييم</p>
+                <div className="flex justify-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setRatingValue(star)}
+                      className="transition-transform hover:scale-110"
+                    >
+                      <Star
+                        className={`size-8 cursor-pointer ${
+                          star <= ratingValue
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setRatingBookingId(null)}
+                  className="flex-1 h-12 rounded-2xl border border-border bg-background font-bold"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={() =>
+                    ratingMutation.mutate({
+                      bookingId: ratingBookingId,
+                      rating: ratingValue,
+                    })
+                  }
+                  disabled={ratingMutation.isPending}
+                  className="flex-1 h-12 rounded-2xl bg-primary text-primary-foreground font-bold disabled:opacity-60"
+                >
+                  {ratingMutation.isPending ? "جارٍ الحفظ..." : "إرسال التقييم"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
