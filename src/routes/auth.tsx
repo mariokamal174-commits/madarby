@@ -14,6 +14,34 @@ export const Route = createFileRoute("/auth")({
 
 type Role = "player" | "coach" | "academy";
 
+async function ensureProfileAndRole(userId: string, role: string, metadata: Record<string, any> = {}) {
+  const fullName = metadata.full_name ?? metadata.fullName ?? "";
+  const phone = metadata.phone ?? "";
+  const city = metadata.city ?? "";
+
+  const { error: profileError } = await supabase.from("profiles").upsert(
+    {
+      id: userId,
+      full_name: fullName,
+      phone,
+      city,
+      primary_role: role,
+    },
+    { onConflict: "id" }
+  );
+  if (profileError) {
+    console.error("Profile upsert failed", profileError);
+  }
+
+  const { error: roleError } = await supabase.from("user_roles").upsert(
+    { user_id: userId, role },
+    { onConflict: "user_id,role" }
+  );
+  if (roleError) {
+    console.error("Role upsert failed", roleError);
+  }
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -102,16 +130,7 @@ function AuthPage() {
 
         const userId = signUpData.user?.id;
         if (userId) {
-          const { error: profileError } = await supabase.from("profiles").upsert({
-            id: userId,
-            full_name: fullName,
-            phone,
-            city,
-            primary_role: role,
-          }, { onConflict: "id" });
-          if (profileError) {
-            console.error("Profile upsert failed", profileError);
-          }
+          await ensureProfileAndRole(userId, role, { full_name: fullName, phone, city });
 
           if (role === "coach") {
             let avatarUrl: string | null = null;
@@ -188,11 +207,21 @@ function AuthPage() {
         if (error) throw error;
 
         const { data: { user } } = await supabase.auth.getUser();
-        const { data: profile } = await supabase
+        if (!user?.id) throw new Error("لم يتم العثور على المستخدم");
+
+        await ensureProfileAndRole(user.id, user.user_metadata?.primary_role ?? "player", {
+          full_name: user.user_metadata?.full_name,
+          phone: user.user_metadata?.phone,
+          city: user.user_metadata?.city,
+        });
+
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("primary_role")
-          .eq("id", user?.id)
-          .single();
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profileError) throw profileError;
 
         navigate({ to: getDefaultRouteForRole(profile?.primary_role) as any });
       }

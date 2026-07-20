@@ -79,6 +79,19 @@ function AdminDashboardPage() {
     },
   });
 
+  const usersQ = useQuery({
+    queryKey: ["admin_users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, primary_role, phone, city, created_at")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   // Fetch stats
   const statsQ = useQuery({
     queryKey: ["admin_stats"],
@@ -203,70 +216,97 @@ function AdminDashboardPage() {
       {/* إدارة المستخدمين */}
       {activeSection === "users" && (
         <div className="space-y-4">
-          <h2 className="font-display font-bold text-lg">قيد الموافقة على المدربين</h2>
-          {verificationsQ.data?.length === 0 ? (
-            <div className="rounded-2xl border border-border bg-surface p-6 text-center text-muted-foreground">
-              لا توجد طلبات معلقة
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {verificationsQ.data?.map((v: any) => (
-                <div key={v.id} className="rounded-2xl border border-border bg-surface p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-display font-bold">{v.coach?.full_name}</h3>
-                      <p className="text-xs text-muted-foreground">{v.coach?.title_ar}</p>
-                      <p className="text-xs text-muted-foreground mt-1">📍 {v.coach?.city}</p>
+          <div className="rounded-2xl border border-border bg-surface p-4">
+            <h2 className="font-display font-bold text-lg mb-2">المستخدمون المسجلون</h2>
+            {usersQ.isLoading ? (
+              <p className="text-sm text-muted-foreground">جاري التحميل...</p>
+            ) : usersQ.data?.length === 0 ? (
+              <p className="text-sm text-muted-foreground">لا توجد حسابات مسجلة بعد</p>
+            ) : (
+              <div className="space-y-2">
+                {usersQ.data?.map((user: any) => (
+                  <div key={user.id} className="rounded-2xl border border-border bg-background p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-sm">{user.full_name || "بدون اسم"}</p>
+                        <p className="text-xs text-muted-foreground">{user.phone || "—"} • {user.city || "—"}</p>
+                      </div>
+                      <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary">
+                        {user.primary_role === "coach" ? "مدرب" : user.primary_role === "academy" ? "أكاديمية" : user.primary_role === "admin" ? "إدمن" : "لاعب"}
+                      </span>
                     </div>
-                    <span className="text-xs bg-amber-500/20 text-amber-600 rounded-lg px-2 py-1 font-bold">معلق</span>
                   </div>
-                  
-                  {v.coach?.bio_ar && (
-                    <p className="text-sm mb-3 p-2 rounded-lg bg-background/50">{v.coach.bio_ar}</p>
-                  )}
-                  
-                  <div className="flex gap-2 mb-3 flex-wrap">
-                    {v.certificates?.map((cert: string, idx: number) => (
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-border bg-surface p-4">
+            <h2 className="font-display font-bold text-lg mb-3">قيد الموافقة على المدربين</h2>
+            {verificationsQ.data?.length === 0 ? (
+              <div className="rounded-2xl border border-border bg-background p-6 text-center text-muted-foreground">
+                لا توجد طلبات معلقة
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {verificationsQ.data?.map((v: any) => (
+                  <div key={v.id} className="rounded-2xl border border-border bg-background p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-display font-bold">{v.coach?.full_name}</h3>
+                        <p className="text-xs text-muted-foreground">{v.coach?.title_ar}</p>
+                        <p className="text-xs text-muted-foreground mt-1">📍 {v.coach?.city}</p>
+                      </div>
+                      <span className="text-xs bg-amber-500/20 text-amber-600 rounded-lg px-2 py-1 font-bold">معلق</span>
+                    </div>
+                    
+                    {v.coach?.bio_ar && (
+                      <p className="text-sm mb-3 p-2 rounded-lg bg-background/50">{v.coach.bio_ar}</p>
+                    )}
+                    
+                    <div className="flex gap-2 mb-3 flex-wrap">
+                      {v.certificates?.map((cert: string, idx: number) => (
+                        <a
+                          key={idx}
+                          href={cert}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs bg-primary/10 text-primary rounded-lg px-2 py-1 hover:bg-primary/20 inline-flex items-center gap-1"
+                        >
+                          شهادة {idx + 1} <ExternalLink className="size-3" />
+                        </a>
+                      ))}
                       <a
-                        key={idx}
-                        href={cert}
+                        href={v.license_card_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs bg-primary/10 text-primary rounded-lg px-2 py-1 hover:bg-primary/20 inline-flex items-center gap-1"
+                        className="text-xs bg-green-500/10 text-green-600 rounded-lg px-2 py-1 hover:bg-green-500/20 inline-flex items-center gap-1"
                       >
-                        شهادة {idx + 1} <ExternalLink className="size-3" />
+                        كارنيه <ExternalLink className="size-3" />
                       </a>
-                    ))}
-                    <a
-                      href={v.license_card_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs bg-green-500/10 text-green-600 rounded-lg px-2 py-1 hover:bg-green-500/20 inline-flex items-center gap-1"
-                    >
-                      كارنيه <ExternalLink className="size-3" />
-                    </a>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleApproveCoach(v.id, v.coach?.id)}
+                        disabled={actionLoading === v.id}
+                        className="flex-1 h-10 rounded-xl bg-green-600 text-white font-bold text-sm flex items-center justify-center gap-1 hover:bg-green-700 disabled:opacity-60"
+                      >
+                        <Check className="size-4" /> قبول
+                      </button>
+                      <button
+                        onClick={() => handleRejectCoach(v.id)}
+                        disabled={actionLoading === v.id}
+                        className="flex-1 h-10 rounded-xl bg-red-600 text-white font-bold text-sm flex items-center justify-center gap-1 hover:bg-red-700 disabled:opacity-60"
+                      >
+                        <X className="size-4" /> رفض
+                      </button>
+                    </div>
                   </div>
-                  
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleApproveCoach(v.id, v.coach?.id)}
-                      disabled={actionLoading === v.id}
-                      className="flex-1 h-10 rounded-xl bg-green-600 text-white font-bold text-sm flex items-center justify-center gap-1 hover:bg-green-700 disabled:opacity-60"
-                    >
-                      <Check className="size-4" /> قبول
-                    </button>
-                    <button
-                      onClick={() => handleRejectCoach(v.id)}
-                      disabled={actionLoading === v.id}
-                      className="flex-1 h-10 rounded-xl bg-red-600 text-white font-bold text-sm flex items-center justify-center gap-1 hover:bg-red-700 disabled:opacity-60"
-                    >
-                      <X className="size-4" /> رفض
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

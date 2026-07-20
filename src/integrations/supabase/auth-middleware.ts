@@ -89,7 +89,13 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       }
     );
 
-    const { data, error } = await supabase.auth.getClaims(token);
+    const authClaimsPromise = supabase.auth.getClaims(token);
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      const timeoutId = setTimeout(() => reject(new Error('Unauthorized: Supabase auth request timed out')), 8000);
+      return () => clearTimeout(timeoutId);
+    });
+
+    const { data, error } = await Promise.race([authClaimsPromise, timeoutPromise]);
     if (error || !data?.claims) {
       throw new Error('Unauthorized: Invalid token');
     }
