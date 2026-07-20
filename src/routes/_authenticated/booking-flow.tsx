@@ -73,8 +73,10 @@ function BookingFlowPage() {
   });
 
   const duration = coachQ.data?.session_duration_min ?? 60;
-  const basePrice = Number(coachQ.data?.price_per_session ?? 0);
-  
+  const coachBasePrice = Number(coachQ.data?.price_per_session ?? 0);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedSlotPrice, setSelectedSlotPrice] = useState<number | null>(null);
+
   const getPriceMultiplier = () => {
     switch(bookingType) {
       case "monthly": return 20;
@@ -84,18 +86,22 @@ function BookingFlowPage() {
       default: return 1;
     }
   };
-  
-  const price = Math.round(basePrice * getPriceMultiplier());
+
+  const effectiveBasePrice = selectedSlotPrice ?? coachBasePrice;
+  const price = Math.round(effectiveBasePrice * getPriceMultiplier());
 
   const slots = (() => {
-    if (!availQ.data || !date) return [] as string[];
+    if (!availQ.data || !date) return [] as Array<{ time: string; price: number }>;
     const dow = new Date(date + "T00:00:00").getDay();
     const windows = availQ.data.filter((a) => a.day_of_week === dow);
-    const out: string[] = [];
+    const out: Array<{ time: string; price: number }> = [];
     for (const w of windows) {
       const s = toMin(w.start_time.slice(0, 5));
       const e = toMin(w.end_time.slice(0, 5));
-      for (let m = s; m + duration <= e; m += duration) out.push(fromMin(m));
+      const windowPrice = Number(w.price ?? coachBasePrice);
+      for (let m = s; m + duration <= e; m += duration) {
+        out.push({ time: fromMin(m), price: windowPrice });
+      }
     }
     return out;
   })();
@@ -257,6 +263,8 @@ function BookingFlowPage() {
               onChange={(e) => {
                 setDate(e.target.value);
                 setTime("");
+                setSelectedSlot(null);
+                setSelectedSlotPrice(null);
               }}
               className="w-full h-12 rounded-2xl border border-border bg-background px-4 text-sm font-bold"
             />
@@ -273,14 +281,18 @@ function BookingFlowPage() {
               </div>
             ) : (
               <div className="grid grid-cols-4 gap-2">
-                {slots.map((s) => {
-                  const taken = takenSet.has(s);
-                  const active = time === s;
+                {slots.map((slot) => {
+                  const taken = takenSet.has(slot.time);
+                  const active = time === slot.time;
                   return (
                     <button
-                      key={s}
+                      key={slot.time}
                       disabled={taken}
-                      onClick={() => setTime(s)}
+                      onClick={() => {
+                        setTime(slot.time);
+                        setSelectedSlot(slot.time);
+                        setSelectedSlotPrice(slot.price);
+                      }}
                       className={`h-10 rounded-xl border font-bold text-sm transition-all ${
                         taken
                           ? "border-border bg-surface text-muted-foreground opacity-50 cursor-not-allowed"
@@ -289,7 +301,8 @@ function BookingFlowPage() {
                           : "border-border bg-surface hover:border-primary"
                       }`}
                     >
-                      {s}
+                      <div>{slot.time}</div>
+                      <div className="text-[10px] text-muted-foreground">{slot.price} ج.م</div>
                     </button>
                   );
                 })}
@@ -330,6 +343,10 @@ function BookingFlowPage() {
                   <span className="font-bold">{duration} دقيقة</span>
                 </div>
                 <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">سعر النافذة</span>
+                  <span className="font-bold">{selectedSlotPrice !== null ? `${selectedSlotPrice} ج.م` : `${coachBasePrice} ج.م`}</span>
+                </div>
+                <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">الموقع</span>
                   <span className="font-bold flex items-center gap-1">
                     <MapPin className="size-3" /> {c.city}
@@ -340,7 +357,7 @@ function BookingFlowPage() {
               <div className="space-y-2 mb-4 border-t border-border pt-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">السعر الأساسي</span>
-                  <span className="font-bold">{basePrice} ج.م</span>
+                  <span className="font-bold">{effectiveBasePrice} ج.م</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">الرسوم (15%)</span>

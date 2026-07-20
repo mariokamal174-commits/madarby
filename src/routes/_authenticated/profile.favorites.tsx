@@ -73,7 +73,7 @@ function Favorites() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-sm text-primary">{item.coaches.price_per_session} ج.م</p>
+                  <p className="font-bold text-sm text-primary">بدءاً من {item.coaches.price_per_session} ج.م</p>
                   <p className="text-xs text-muted-foreground">⭐ {item.coaches.rating}</p>
                 </div>
               </Link>

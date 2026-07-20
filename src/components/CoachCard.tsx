@@ -8,6 +8,8 @@ export type CoachCardData = {
   avatar_url: string | null;
   rating: number | null;
   price_per_session: number;
+  min_price?: number;
+  max_price?: number;
   city: string | null;
   verified?: boolean;
 };
@@ -47,7 +49,9 @@ export function CoachCard({ coach }: { coach: CoachCardData }) {
         </div>
         <div className="flex justify-between items-center">
           <span className="font-display font-bold text-primary text-sm">
-            {Number(coach.price_per_session)} ج.م{" "}
+            {coach.max_price && coach.min_price !== undefined && coach.max_price !== coach.min_price
+              ? `من ${Number(coach.min_price)} إلى ${Number(coach.max_price)} ج.م`
+              : `بدءاً من ${Number(coach.min_price ?? coach.price_per_session)} ج.م`}
             <span className="text-[10px] text-muted-foreground font-normal">/ جلسة</span>
           </span>
           <span className="px-3 py-1.5 bg-foreground text-background text-[10px] font-bold rounded-lg">حجز</span>

@@ -100,7 +100,7 @@ function CoachDetail() {
       <div className="px-5 mt-6">
         <div className="bg-surface rounded-3xl p-5 flex justify-between items-center border border-border">
           <div>
-            <p className="text-muted-foreground text-xs mb-1">الجلسة الواحدة</p>
+            <p className="text-muted-foreground text-xs mb-1">يبدأ السعر من</p>
             <p className="font-display font-bold text-2xl text-primary">{Number(c.price_per_session)} <span className="text-sm">ج.م</span></p>
           </div>
           <div className="flex items-center gap-1 text-muted-foreground text-xs"><Clock className="size-3.5" /> {c.session_duration_min ?? 60} دقيقة</div>

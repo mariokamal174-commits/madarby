@@ -171,6 +171,7 @@ export type Database = {
           day_of_week: number
           end_time: string
           id: string
+          price: number
           start_time: string
         }
         Insert: {
@@ -178,6 +179,7 @@ export type Database = {
           day_of_week: number
           end_time: string
           id?: string
+          price: number
           start_time: string
         }
         Update: {
@@ -185,6 +187,7 @@ export type Database = {
           day_of_week?: number
           end_time?: string
           id?: string
+          price?: number
           start_time?: string
         }
         Relationships: [

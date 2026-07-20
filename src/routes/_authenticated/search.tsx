@@ -30,8 +30,12 @@ function SearchPage() {
   const [selectedSport, setSelectedSport] = useState<string | null>(null);
   const [city, setCity] = useState("");
   const [minRating, setMinRating] = useState(0);
+  const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(500);
-  const [sessionType, setSessionType] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDayOfWeek, setSelectedDayOfWeek] = useState<number | null>(null);
+  const [timeOfDay, setTimeOfDay] = useState<"all" | "morning" | "afternoon" | "evening">("all");
+  const [availabilityFilter, setAvailabilityFilter] = useState<"all" | "available_today" | "cheapest_in_range">("all");
   const [searchType, setSearchType] = useState<"coaches" | "academies">("coaches");
   const [showFilters, setShowFilters] = useState(false);
 
@@ -47,16 +51,27 @@ function SearchPage() {
     },
   });
 
+  const dayNames = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+  const selectedDateDOW = selectedDate ? new Date(selectedDate + "T00:00:00").getDay() : null;
+  const todayDOW = new Date().getDay();
+  const effectiveSelectedDayOfWeek =
+    availabilityFilter === "available_today"
+      ? todayDOW
+      : selectedDateDOW ?? selectedDayOfWeek;
+
+  type CoachWithAvailability = CoachCardData & {
+    coach_availability?: Array<{ day_of_week: number; start_time: string; end_time: string; price: number }>;
+  };
+
   const coachesQ = useQuery({
-    queryKey: ["search-coaches", q, selectedSport, city, minRating, maxPrice],
+    queryKey: ["search-coaches", q, selectedSport, city, minRating, minPrice, maxPrice, selectedDate, selectedDayOfWeek, timeOfDay, availabilityFilter],
     queryFn: async () => {
       let query = supabase
         .from("coaches")
-        .select("id, full_name, title_ar, avatar_url, rating, price_per_session, city")
+        .select("id, full_name, title_ar, avatar_url, rating, price_per_session, city, coach_availability(day_of_week, start_time, end_time, price)")
         .eq("approved", true)
         .eq("verified", true)
         .gte("rating", minRating)
-        .lte("price_per_session", maxPrice)
         .order("rating", { ascending: false })
         .limit(30);
       
@@ -66,10 +81,59 @@ function SearchPage() {
       if (city.trim()) {
         query = query.ilike("city", `%${city}%`);
       }
-      
+      if (selectedSport) {
+        const { data: linked, error: linkedError } = await supabase.from("coach_sports").select("coach_id").eq("sport_id", selectedSport);
+        if (linkedError) throw linkedError;
+        const ids = (linked ?? []).map((r: any) => r.coach_id);
+        if (ids.length === 0) return [] as CoachCardData[];
+        query = query.in("id", ids);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
-      return data as CoachCardData[];
+
+      return ((data ?? []) as CoachWithAvailability[])
+        .map((coach) => {
+          const availability = coach.coach_availability ?? [];
+          const filteredAvailability = availability.filter((slot) => {
+            if (effectiveSelectedDayOfWeek !== null && slot.day_of_week !== effectiveSelectedDayOfWeek) return false;
+
+            const hour = Number(slot.start_time.slice(0, 2));
+            if (timeOfDay === "morning") return hour < 12;
+            if (timeOfDay === "afternoon") return hour >= 12 && hour < 17;
+            if (timeOfDay === "evening") return hour >= 17;
+            return true;
+          });
+
+          const prices = filteredAvailability.map((slot) => Number(slot.price ?? coach.price_per_session));
+          const minSlotPrice = prices.length > 0 ? Math.min(...prices) : coach.price_per_session;
+          const maxSlotPrice = prices.length > 0 ? Math.max(...prices) : coach.price_per_session;
+          const hasMatchingPrice =
+            availabilityFilter === "cheapest_in_range"
+              ? minSlotPrice >= minPrice && minSlotPrice <= maxPrice
+              : prices.some((price) => price >= minPrice && price <= maxPrice);
+
+          return {
+            ...coach,
+            coach_availability: filteredAvailability,
+            min_price: minSlotPrice,
+            max_price: maxSlotPrice,
+            available_slot_count: filteredAvailability.length,
+            hasMatchingPrice,
+          };
+        })
+        .filter((coach) => coach.available_slot_count > 0 && coach.hasMatchingPrice)
+        .map((coach) => ({
+          id: coach.id,
+          full_name: coach.full_name,
+          title_ar: coach.title_ar,
+          avatar_url: coach.avatar_url,
+          rating: coach.rating,
+          price_per_session: coach.price_per_session,
+          city: coach.city,
+          min_price: coach.min_price,
+          max_price: coach.max_price,
+        })) as CoachCardData[];
     },
   });
 
@@ -166,38 +230,121 @@ function SearchPage() {
 
             {/* Price Filter - Only for Coaches */}
             {searchType === "coaches" && (
-              <div>
-                <label className="text-xs font-bold text-muted-foreground block mb-2">💰 السعر: حتى {maxPrice} ج.م</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="1000"
-                  step="50"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(parseInt(e.target.value))}
-                  className="w-full"
-                />
-              </div>
-            )}
+              <div className="grid gap-3">
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground block mb-2">💰 نطاق السعر</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <input
+                        type="number"
+                        min="0"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(Number(e.target.value))}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-right text-xs"
+                        placeholder="أدنى"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">الحد الأدنى</p>
+                    </div>
+                    <div>
+                      <input
+                        type="number"
+                        min="0"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(Number(e.target.value))}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-right text-xs"
+                        placeholder="أقصى"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">الحد الأقصى</p>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Rating Filter - Only for Coaches */}
-            {searchType === "coaches" && (
-              <div>
-                <label className="text-xs font-bold text-muted-foreground block mb-2">⭐ التقييم الأدنى: {minRating}</label>
-                <div className="flex gap-2">
-                  {[0, 3, 3.5, 4, 4.5, 5].map((rating) => (
-                    <button
-                      key={rating}
-                      onClick={() => setMinRating(rating)}
-                      className={`flex-1 h-8 rounded-lg text-xs font-bold transition-all ${
-                        minRating === rating
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-background border border-border"
-                      }`}
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground block mb-2">📅 اليوم / التاريخ</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={selectedDayOfWeek ?? ""}
+                      onChange={(e) => setSelectedDayOfWeek(e.target.value === "" ? null : Number(e.target.value))}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-right text-xs"
                     >
-                      {rating === 0 ? "الكل" : rating}
-                    </button>
-                  ))}
+                      <option value="">كل الأيام</option>
+                      {dayNames.map((day, index) => (
+                        <option key={day} value={index}>{day}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-right text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground block mb-2">⏰ وقت اليوم</label>
+                  <div className="flex gap-2">
+                    {[
+                      { id: "all", label: "الكل" },
+                      { id: "morning", label: "صباحي" },
+                      { id: "afternoon", label: "ظهري" },
+                      { id: "evening", label: "مسائي" },
+                    ].map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => setTimeOfDay(option.id as "all" | "morning" | "afternoon" | "evening")}
+                        className={`flex-1 h-8 rounded-lg text-xs font-bold transition-all ${
+                          timeOfDay === option.id
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background border border-border"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground block mb-2">🔎 فلتر التوفر</label>
+                  <div className="flex gap-2">
+                    {[
+                      { id: "all", label: "كل المدربين" },
+                      { id: "available_today", label: "متاح اليوم فقط" },
+                      { id: "cheapest_in_range", label: "أرخص جلسة ضمن النطاق" },
+                    ].map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => setAvailabilityFilter(option.id as "all" | "available_today" | "cheapest_in_range")}
+                        className={`flex-1 h-8 rounded-lg text-[10px] font-bold transition-all ${
+                          availabilityFilter === option.id
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background border border-border"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground block mb-2">⭐ التقييم الأدنى: {minRating}</label>
+                  <div className="flex gap-2">
+                    {[0, 3, 3.5, 4, 4.5, 5].map((rating) => (
+                      <button
+                        key={rating}
+                        onClick={() => setMinRating(rating)}
+                        className={`flex-1 h-8 rounded-lg text-xs font-bold transition-all ${
+                          minRating === rating
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background border border-border"
+                        }`}
+                      >
+                        {rating === 0 ? "الكل" : rating}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

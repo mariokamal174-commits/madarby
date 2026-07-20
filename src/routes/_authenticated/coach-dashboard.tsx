@@ -100,7 +100,22 @@ function CoachDashboard() {
     })
     .reduce((sum: number, b: any) => sum + (b.price || 0), 0);
 
-  // Analytics data for chart
+  const averagePrice = completedBookings.length > 0 ? Math.round(totalEarnings / completedBookings.length) : 0;
+
+  const slotStats = completedBookings.reduce((acc: Record<string, { count: number; revenue: number }>, booking: any) => {
+    const date = new Date(booking.start_time);
+    const label = `${date.toLocaleDateString("ar-SA", { weekday: "long" })} ${date.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}`;
+    if (!acc[label]) acc[label] = { count: 0, revenue: 0 };
+    acc[label].count += 1;
+    acc[label].revenue += Number(booking.price || 0);
+    return acc;
+  }, {});
+
+  const popularSlotEntry = Object.entries(slotStats).sort((a, b) => b[1].count - a[1].count)[0];
+  const popularSlotLabel = popularSlotEntry ? popularSlotEntry[0] : "لا توجد جلسات";
+  const popularSlotCount = popularSlotEntry ? popularSlotEntry[1].count : 0;
+  const popularSlotRevenue = popularSlotEntry ? popularSlotEntry[1].revenue : 0;
+
   const analyticsData = [
     { name: "السبت", bookings: 4 },
     { name: "الأحد", bookings: 3 },

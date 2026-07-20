@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, PlusCircle, Trash2, PencilLine } from "lucide-react";
 import { toast } from "sonner";
@@ -24,13 +24,14 @@ function CoachAvailability() {
   const [time, setTime] = useState("19:00");
   const [price, setPrice] = useState("300");
   const [recurring, setRecurring] = useState(true);
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const [editingSlot, setEditingSlot] = useState<CoachAvailabilitySlot | null>(null);
+  const [editPrice, setEditPrice] = useState("");
 
   const coachProfileQ = useQuery({
     queryKey: ["coach-profile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data, error } = await supabase.from("coaches").select("id, price_per_session").eq("user_id", user.id).single();
+      const { data, error } = await supabase.from("coaches").select("id").eq("user_id", user.id).single();
       if (error) throw error;
       return data;
     },
@@ -39,20 +40,13 @@ function CoachAvailability() {
 
   const coachId = coachProfileQ.data?.id;
 
-  useEffect(() => {
-    if (coachProfileQ.data?.price_per_session !== undefined) {
-      setCurrentPrice(coachProfileQ.data.price_per_session);
-      setPrice(String(coachProfileQ.data.price_per_session));
-    }
-  }, [coachProfileQ.data?.price_per_session]);
-
   const availabilityQ = useQuery({
     queryKey: ["coach_availability", coachId],
     queryFn: async () => {
       if (!coachId) return [] as CoachAvailabilitySlot[];
       const { data, error } = await supabase
         .from("coach_availability")
-        .select("id, day_of_week, start_time, end_time")
+        .select("id, day_of_week, start_time, end_time, price")
         .eq("coach_id", coachId)
         .order("day_of_week")
         .order("start_time");
@@ -66,7 +60,7 @@ function CoachAvailability() {
         recurring: true,
         available: row.end_time && row.end_time > row.start_time,
         type: row.end_time && row.end_time > row.start_time ? "available" : "blocked",
-        price: currentPrice ?? 0,
+        price: Number(row.price ?? 0),
       }));
     },
     enabled: !!coachId,
@@ -95,17 +89,12 @@ function CoachAvailability() {
         day_of_week: dayNameToNumber(day),
         start_time: `${start}:00`,
         end_time: `${end}:00`,
+        price: normalized,
       });
       if (error) throw error;
 
-      const { error: priceError } = await supabase.from("coaches").update({ price_per_session: normalized }).eq("user_id", user?.id);
-      if (priceError) throw priceError;
-      setCurrentPrice(normalized);
-      setPrice(String(normalized));
-
-      toast.success("تم حفظ النافذة وتحديث سعر الجلسة");
+      toast.success("تم حفظ النافذة بالسعر الخاص بها");
       queryClient.invalidateQueries({ queryKey: ["coach_availability", coachId] });
-      queryClient.invalidateQueries({ queryKey: ["coach-profile", user?.id] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "فشل حفظ الجلسة");
     }
@@ -118,13 +107,39 @@ function CoachAvailability() {
       if (error) throw error;
       toast.success("تم حذف النافذة");
       queryClient.invalidateQueries({ queryKey: ["coach_availability", coachId] });
+      if (editingSlot?.id === id) {
+        setEditingSlot(null);
+        setEditPrice("");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "فشل حذف النافذة");
     }
   }
 
-  function toggleSlot(id: string) {
-    void removeSlot(id);
+  function startEditSlot(slot: CoachAvailabilitySlot) {
+    setEditingSlot(slot);
+    setEditPrice(String(slot.price ?? 0));
+  }
+
+  async function updateSlotPrice() {
+    if (!coachId || !editingSlot) return;
+    const parsedPrice = Number(editPrice);
+    const normalized = Number.isFinite(parsedPrice) ? parsedPrice : 0;
+
+    try {
+      const { error } = await supabase
+        .from("coach_availability")
+        .update({ price: normalized })
+        .eq("id", editingSlot.id)
+        .eq("coach_id", coachId);
+      if (error) throw error;
+      toast.success("تم تحديث سعر النافذة");
+      setEditingSlot(null);
+      setEditPrice("");
+      queryClient.invalidateQueries({ queryKey: ["coach_availability", coachId] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "فشل تحديث السعر");
+    }
   }
 
   function addMinutes(timeValue: string, minutes: number) {
@@ -177,9 +192,8 @@ function CoachAvailability() {
         </div>
         <div className="space-y-3">
           <div className="rounded-2xl border border-border bg-background p-3">
-            <p className="text-sm font-semibold text-foreground">السعر الحالي للجلسة</p>
-            <p className="mt-2 text-lg font-bold text-primary">{currentPrice ? `${currentPrice} ج.م` : "لم يتم ضبط السعر بعد"}</p>
-            <p className="mt-1 text-xs text-muted-foreground">يمكنك تغيير السعر هنا وسيتم حفظه كالسعر الافتراضي للجلسات.</p>
+            <p className="text-sm font-semibold text-foreground">سعر هذه النافذة</p>
+            <p className="mt-2 text-sm text-muted-foreground">كل نافذة تتسع لسعر خاص بها، ولا تعتمد على سعر المدرب العام.</p>
           </div>
           <select value={day} onChange={(e) => setDay(e.target.value)} className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm">
             <option value="الأحد">الأحد</option>
@@ -215,6 +229,34 @@ function CoachAvailability() {
         </div>
       </div>
 
+      {editingSlot && (
+        <div className="rounded-3xl border border-border bg-surface p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-xs text-muted-foreground">تعديل سعر النافذة</p>
+              <p className="font-bold">{editingSlot.day} • {editingSlot.time}</p>
+            </div>
+            <button onClick={() => setEditingSlot(null)} className="text-xs text-muted-foreground hover:text-foreground">إلغاء</button>
+          </div>
+          <div className="grid gap-3">
+            <div>
+              <label className="text-xs font-bold text-muted-foreground block mb-2">السعر الجديد</label>
+              <input
+                type="number"
+                min="0"
+                step="50"
+                value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value)}
+                className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm"
+              />
+            </div>
+            <button onClick={updateSlotPrice} className="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white">
+              حفظ التعديل
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-3">
         {slots.map((slot) => (
           <div key={slot.id} className="rounded-3xl border border-border bg-card p-4">
@@ -229,8 +271,8 @@ function CoachAvailability() {
               <span className={`rounded-full px-3 py-1 text-[10px] font-bold ${typeMeta[slot.type].cls}`}>{typeMeta[slot.type].label}</span>
             </div>
             <div className="mt-3 flex gap-2">
-              <button onClick={() => toggleSlot(slot.id)} className="flex items-center gap-1 rounded-full bg-surface px-3 py-2 text-[11px] font-bold">
-                <PencilLine className="size-3.5" /> تبديل الحالة
+                <button onClick={() => startEditSlot(slot)} className="flex items-center gap-1 rounded-full bg-surface px-3 py-2 text-[11px] font-bold">
+                <PencilLine className="size-3.5" /> تعديل السعر
               </button>
               <button onClick={() => removeSlot(slot.id)} className="flex items-center gap-1 rounded-full bg-red-50 px-3 py-2 text-[11px] font-bold text-red-700">
                 <Trash2 className="size-3.5" /> حذف
