@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CoachCard, type CoachCardData } from "@/components/CoachCard";
@@ -8,6 +8,20 @@ import { PhoneShell } from "@/components/PhoneShell";
 import { Search, Filter, MapPin, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/search")({
+  beforeLoad: async () => {
+    const { data: userData, error } = await supabase.auth.getUser();
+    if (error || !userData.user) throw redirect({ to: "/auth" });
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("primary_role")
+      .eq("id", userData.user.id)
+      .single();
+
+    if (profile?.primary_role === "coach") {
+      throw redirect({ to: "/home" });
+    }
+  },
   component: SearchPage,
 });
 

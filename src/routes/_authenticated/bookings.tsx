@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,20 @@ import { Calendar, Clock, MapPin, User, Trash2, CheckCircle, AlertCircle, Star }
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/bookings")({
+  beforeLoad: async () => {
+    const { data: userData, error } = await supabase.auth.getUser();
+    if (error || !userData.user) throw redirect({ to: "/auth" });
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("primary_role")
+      .eq("id", userData.user.id)
+      .single();
+
+    if (profile?.primary_role === "coach") {
+      throw redirect({ to: "/home" });
+    }
+  },
   component: PlayerBookings,
 });
 
