@@ -152,7 +152,7 @@ function CoachVerificationStatus() {
                   سعر الجلسة
                 </p>
                 <p className="text-sm font-bold">
-                  {coach.price_per_session} ر.س
+                  {coach.price_per_session} ج.م
                 </p>
               </div>
               <div>

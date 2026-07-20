@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneShell } from "@/components/PhoneShell";
 import { CheckCircle, ArrowRight, Heart, Target, Calendar } from "lucide-react";
@@ -29,22 +30,23 @@ function PlayerOnboarding() {
     });
   }, [navigate]);
 
-  const sportOptions = [
-    "كرة قدم ⚽",
-    "سباحة 🏊",
-    "تنس 🎾",
-    "كرة سلة 🏀",
-    "يوجا 🧘",
-    "جيم 💪",
-    "ركض 🏃",
-    "قتال 🥊",
-  ];
+  const { data: sports = [] } = useQuery({
+    queryKey: ["sports"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sports")
+        .select("id, name_ar, emoji")
+        .order("sort_order");
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
-  const toggleSport = (sport: string) => {
-    if (favoriteSports.includes(sport)) {
-      setFavoriteSports(favoriteSports.filter((s) => s !== sport));
+  const toggleSport = (sportName: string) => {
+    if (favoriteSports.includes(sportName)) {
+      setFavoriteSports(favoriteSports.filter((s) => s !== sportName));
     } else {
-      setFavoriteSports([...favoriteSports, sport]);
+      setFavoriteSports([...favoriteSports, sportName]);
     }
   };
 
@@ -200,18 +202,18 @@ function PlayerOnboarding() {
               className="space-y-4 flex-1 flex flex-col justify-center"
             >
               <div className="grid grid-cols-2 gap-2">
-                {sportOptions.map((sport) => (
+                {sports.map((sport: any) => (
                   <button
-                    key={sport}
+                    key={sport.id}
                     type="button"
-                    onClick={() => toggleSport(sport)}
-                    className={`h-12 rounded-2xl font-display font-bold text-sm transition-all ${
-                      favoriteSports.includes(sport)
+                    onClick={() => toggleSport(sport.name_ar)}
+                    className={`h-12 rounded-2xl font-display font-bold text-sm transition-all truncate px-2 ${
+                      favoriteSports.includes(sport.name_ar)
                         ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
                         : "bg-surface hover:bg-background"
                     }`}
                   >
-                    {sport}
+                    {sport.emoji} {sport.name_ar}
                   </button>
                 ))}
               </div>

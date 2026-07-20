@@ -164,7 +164,7 @@ function CoachVerification() {
           {/* Price per session */}
           <div>
             <label className="block text-xs font-bold text-muted-foreground mb-2">
-              سعر الجلسة (ريال)
+              سعر الجلسة (جنيه مصري)
             </label>
             <div className="relative">
               <input

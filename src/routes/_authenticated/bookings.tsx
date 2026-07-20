@@ -131,7 +131,7 @@ function PlayerBookings() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-primary">
-                          {booking.price} ر.س
+                          {booking.price} ج.م
                         </span>
                       </div>
                     </div>

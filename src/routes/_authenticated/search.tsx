@@ -36,6 +36,8 @@ function SearchPage() {
       let query = supabase
         .from("coaches")
         .select("id, full_name, title_ar, avatar_url, rating, price_per_session, city, verified")
+        .eq("approved", true)
+        .eq("verified", true)
         .gte("rating", minRating)
         .order("rating", { ascending: false })
         .limit(30);
@@ -59,6 +61,7 @@ function SearchPage() {
       let query = supabase
         .from("academies")
         .select("id, name_ar, city, cover_url, rating")
+        .eq("approved", true)
         .order("rating", { ascending: false })
         .limit(30);
       

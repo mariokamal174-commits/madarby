@@ -207,7 +207,7 @@ export const reviewSeed: ReviewRecord[] = [
 export const notificationsSeed: NotificationItem[] = [
   { id: "n-1", title: "تم استلام حجز جديد", body: "طلب جلسة فردية من سارة أحمد", time: "قبل 5 دقائق", unread: true, type: "booking" },
   { id: "n-2", title: "تذكير قبل 24 ساعة", body: "جلسة مع نادر المطيري تبدأ غدًا", time: "قبل 20 دقيقة", unread: true, type: "reminder" },
-  { id: "n-3", title: "تم الدفع", body: "تم استلام 255 ريالًا لحجز bk-1003", time: "قبل ساعة", unread: false, type: "payment" },
+  { id: "n-3", title: "تم الدفع", body: "تم استلام 255 جنيهًا مصريًا لحجز bk-1003", time: "قبل ساعة", unread: false, type: "payment" },
 ];
 
 export const analyticsSeed: AnalyticsPoint[] = [

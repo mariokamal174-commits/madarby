@@ -47,6 +47,8 @@ function Home() {
       let q = supabase
         .from("coaches")
         .select("id, full_name, title_ar, avatar_url, rating, price_per_session, city")
+        .eq("approved", true)
+        .eq("verified", true)
         .order("rating", { ascending: false })
         .limit(10);
       if (sport) {

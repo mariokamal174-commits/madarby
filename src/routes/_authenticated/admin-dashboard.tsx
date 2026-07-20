@@ -13,21 +13,35 @@ export const Route = createFileRoute("/_authenticated/admin-dashboard")({
 function AdminDashboardPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Fetch pending coach verifications
+  // Fetch pending coach verifications with coach data
   const verificationsQ = useQuery({
     queryKey: ["coach_verifications_pending"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("coach_verifications")
-        .select("*, coaches:coach_id(id, full_name, title_ar, user_id)")
+        .select("id, coach_id, certificates, license_card_url, status, submitted_at")
         .eq("status", "pending")
         .order("submitted_at", { ascending: false });
+      
       if (error) throw error;
-      return data || [];
+      
+      // Fetch coach details for each verification
+      const verificationsWithCoaches = await Promise.all(
+        (data || []).map(async (v: any) => {
+          const { data: coach } = await supabase
+            .from("coaches")
+            .select("id, full_name, title_ar, bio_ar, city, avatar_url, user_id")
+            .eq("user_id", v.coach_id)
+            .single();
+          return { ...v, coach };
+        })
+      );
+      
+      return verificationsWithCoaches || [];
     },
   });
 
-  async function handleApprove(verificationId: string, coachUserId: string) {
+  async function handleApprove(verificationId: string, coachUserId: string, coachId: string) {
     setActionLoading(verificationId);
     try {
       // Update verification status
@@ -38,11 +52,11 @@ function AdminDashboardPage() {
 
       if (verifyError) throw verifyError;
 
-      // Update coach verified status
+      // Update coach verified and approved status
       const { error: coachError } = await supabase
         .from("coaches")
         .update({ verified: true, approved: true })
-        .eq("user_id", coachUserId);
+        .eq("id", coachId);
 
       if (coachError) throw coachError;
 
@@ -139,10 +153,13 @@ function AdminDashboardPage() {
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 className="font-display font-bold">
-                    {verification.coaches?.full_name}
+                    {verification.coach?.full_name}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    {verification.coaches?.title_ar}
+                    {verification.coach?.title_ar}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    📍 {verification.coach?.city}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 text-amber-600">
@@ -150,6 +167,14 @@ function AdminDashboardPage() {
                   <span className="text-xs font-bold">معلق</span>
                 </div>
               </div>
+
+              {/* Bio */}
+              {verification.coach?.bio_ar && (
+                <div className="mb-4 p-3 rounded-xl bg-background/50">
+                  <p className="text-xs font-bold text-muted-foreground mb-1">النبذة المهنية</p>
+                  <p className="text-sm">{verification.coach.bio_ar}</p>
+                </div>
+              )}
 
               {/* Documents Preview */}
               <div className="mb-4 space-y-2">
@@ -193,7 +218,7 @@ function AdminDashboardPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() =>
-                    handleApprove(verification.id, verification.coach_id)
+                    handleApprove(verification.id, verification.coach_id, verification.coach?.id)
                   }
                   disabled={actionLoading === verification.id}
                   className="flex-1 h-10 rounded-xl bg-green-600 text-white font-display font-bold text-sm flex items-center justify-center gap-1 hover:bg-green-700 disabled:opacity-60 transition-colors"

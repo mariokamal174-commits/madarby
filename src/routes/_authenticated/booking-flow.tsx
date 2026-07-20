@@ -33,7 +33,13 @@ function BookingFlowPage() {
     enabled: !!coachId,
     queryKey: ["coach", coachId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("coaches").select("*").eq("id", coachId).single();
+      const { data, error } = await supabase
+        .from("coaches")
+        .select("*")
+        .eq("id", coachId)
+        .eq("approved", true)
+        .eq("verified", true)
+        .single();
       if (error) throw error;
       return data;
     },
@@ -87,15 +93,19 @@ function BookingFlowPage() {
         player_id: userData.user.id,
         coach_id: coachId,
         booking_date: date,
-        start_time: time + ":00",
+        start_time: time,
         duration_min: duration,
         price,
-        status: "confirmed",
+        status: "pending",
       });
-      if (error) throw error;
-      toast.success("تمت معالجة الدفع بنجاح وتم إنشاء الحجز");
+      if (error) {
+        console.error("Booking insert error:", error);
+        throw error;
+      }
+      toast.success("تم إنشاء الحجز بنجاح! في انتظار موافقة المدرب");
       navigate({ to: "/bookings" });
     } catch (err) {
+      console.error("Booking error:", err);
       toast.error(err instanceof Error ? err.message : "خطأ في الحجز");
     } finally {
       setIsProcessing(false);

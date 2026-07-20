@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PhoneShell } from "@/components/PhoneShell";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -37,6 +38,18 @@ function AuthPage() {
       if (data.session) navigate({ to: "/home" });
     });
   }, [navigate]);
+
+  const { data: sports = [] } = useQuery({
+    queryKey: ["sports"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sports")
+        .select("id, name_ar, emoji")
+        .order("sort_order");
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -237,14 +250,24 @@ function AuthPage() {
                   className="w-full h-12 bg-surface rounded-2xl pr-11 pl-4 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                 >
                   <option value="">اختر المدينة</option>
-                  <option value="الرياض">الرياض</option>
-                  <option value="جدة">جدة</option>
-                  <option value="الدمام">الدمام</option>
-                  <option value="الخبر">الخبر</option>
-                  <option value="الظهران">الظهران</option>
-                  <option value="الإحساء">الإحساء</option>
-                  <option value="مكة">مكة</option>
-                  <option value="المدينة">المدينة</option>
+                  <option value="القاهرة">القاهرة</option>
+                  <option value="الإسكندرية">الإسكندرية</option>
+                  <option value="الجيزة">الجيزة</option>
+                  <option value="الدقهلية">الدقهلية</option>
+                  <option value="الغربية">الغربية</option>
+                  <option value="المنيا">المنيا</option>
+                  <option value="الفيوم">الفيوم</option>
+                  <option value="بني سويف">بني سويف</option>
+                  <option value="أسيوط">أسيوط</option>
+                  <option value="سوهاج">سوهاج</option>
+                  <option value="قنا">قنا</option>
+                  <option value="الأقصر">الأقصر</option>
+                  <option value="أسوان">أسوان</option>
+                  <option value="البحر الأحمر">البحر الأحمر</option>
+                  <option value="الإسماعيلية">الإسماعيلية</option>
+                  <option value="بورسعيد">بورسعيد</option>
+                  <option value="شمال سيناء">شمال سيناء</option>
+                  <option value="جنوب سيناء">جنوب سيناء</option>
                 </select>
               </div>
 
@@ -280,13 +303,19 @@ function AuthPage() {
                   </div>
                   <div className="relative">
                     <Award className="absolute right-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <input
-                      type="text"
+                    <select
+                      required
                       value={playerSport}
                       onChange={(e) => setPlayerSport(e.target.value)}
-                      placeholder="الرياضة المفضلة"
                       className="w-full h-12 bg-surface rounded-2xl pr-11 pl-4 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                    />
+                    >
+                      <option value="">اختر الرياضة المفضلة</option>
+                      {sports.map((sport: any) => (
+                        <option key={sport.id} value={sport.name_ar}>
+                          {sport.emoji} {sport.name_ar}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </>
               )}
@@ -296,14 +325,19 @@ function AuthPage() {
                 <>
                   <div className="relative">
                     <Award className="absolute right-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <input
+                    <select
                       required
-                      type="text"
                       value={coachSpecialty}
                       onChange={(e) => setCoachSpecialty(e.target.value)}
-                      placeholder="التخصص (كرة قدم، سباحة، إلخ)"
                       className="w-full h-12 bg-surface rounded-2xl pr-11 pl-4 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                    />
+                    >
+                      <option value="">اختر التخصص</option>
+                      {sports.map((sport: any) => (
+                        <option key={sport.id} value={sport.name_ar}>
+                          {sport.emoji} {sport.name_ar}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="relative">
                     <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />

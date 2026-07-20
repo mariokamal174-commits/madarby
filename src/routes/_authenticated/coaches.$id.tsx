@@ -13,7 +13,13 @@ function CoachDetail() {
   const q = useQuery({
     queryKey: ["coach", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("coaches").select("*").eq("id", id).single();
+      const { data, error } = await supabase
+        .from("coaches")
+        .select("*")
+        .eq("id", id)
+        .eq("approved", true)
+        .eq("verified", true)
+        .single();
       if (error) throw error;
       return data;
     },
@@ -65,7 +71,7 @@ function CoachDetail() {
         <div className="bg-surface rounded-3xl p-5 flex justify-between items-center">
           <div>
             <p className="text-muted-foreground text-xs mb-1">الجلسة الواحدة</p>
-            <p className="font-display font-bold text-2xl text-primary">{Number(c.price_per_session)} <span className="text-sm">ر.س</span></p>
+            <p className="font-display font-bold text-2xl text-primary">{Number(c.price_per_session)} <span className="text-sm">ج.م</span></p>
           </div>
           <div className="flex items-center gap-1 text-muted-foreground text-xs"><Clock className="size-3.5" /> ٦٠ دقيقة</div>
         </div>
