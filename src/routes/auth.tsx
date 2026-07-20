@@ -128,7 +128,19 @@ function AuthPage() {
         });
         if (signUpError) throw signUpError;
 
+        // Save pending email so check-email page can show it
+        try { localStorage.setItem("pendingEmail", email.trim()); } catch {}
+
         const userId = signUpData.user?.id;
+        // If Supabase requires email confirmation, `signUpData.user` may be undefined.
+        // In that case inform the user to confirm their email instead of proceeding.
+        if (!userId) {
+          toast.success("تم إنشاء الحساب. تحقق من بريدك لتفعيل الحساب قبل تسجيل الدخول.");
+          navigate({ to: "/check-email" });
+          setLoading(false);
+          return;
+        }
+
         if (userId) {
           await ensureProfileAndRole(userId, role, { full_name: fullName, phone, city });
 
@@ -198,9 +210,21 @@ function AuthPage() {
               }
             }
           }
+          // Try auto sign-in if Supabase returned a user/session (helps when auto-confirm is enabled)
+          try {
+            if (signUpData.user) {
+              const { error: signinErr } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+              if (signinErr) {
+                // ignore - user might still need to confirm email
+                console.warn('Auto sign-in failed after signup:', signinErr.message || signinErr);
+              }
+            }
+          } catch (e) {
+            console.warn('Auto sign-in attempt failed', e);
+          }
         }
 
-        toast.success("تم إنشاء الحساب بنجاح — راجع بريدك إذا كان التحقق مطلوبًا");
+        toast.success("تم إنشاء الحساب بنجاح");
         navigate({ to: "/onboarding-complete" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

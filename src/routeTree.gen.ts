@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CheckEmailRouteImport } from './routes/check-email'
 import { Route as CoachVerificationRouteImport } from './routes/coach-verification'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as OnboardingCompleteRouteImport } from './routes/onboarding-complete'
@@ -52,6 +53,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckEmailRoute = CheckEmailRouteImport.update({
+  id: '/check-email',
+  path: '/check-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoachVerificationRoute = CoachVerificationRouteImport.update({
@@ -207,6 +213,7 @@ const AuthenticatedProfileSupportRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/check-email': typeof CheckEmailRoute
   '/coach-verification': typeof CoachVerificationRoute
   '/onboarding': typeof OnboardingRoute
   '/onboarding-complete': typeof OnboardingCompleteRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/check-email': typeof CheckEmailRoute
   '/coach-verification': typeof CoachVerificationRoute
   '/onboarding': typeof OnboardingRoute
   '/onboarding-complete': typeof OnboardingCompleteRoute
@@ -271,6 +279,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/check-email': typeof CheckEmailRoute
   '/coach-verification': typeof CoachVerificationRoute
   '/onboarding': typeof OnboardingRoute
   '/onboarding-complete': typeof OnboardingCompleteRoute
@@ -304,6 +313,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/check-email'
     | '/coach-verification'
     | '/onboarding'
     | '/onboarding-complete'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/check-email'
     | '/coach-verification'
     | '/onboarding'
     | '/onboarding-complete'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/check-email'
     | '/coach-verification'
     | '/onboarding'
     | '/onboarding-complete'
@@ -400,6 +412,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CheckEmailRoute: typeof CheckEmailRoute
   CoachVerificationRoute: typeof CoachVerificationRoute
   OnboardingRoute: typeof OnboardingRoute
   OnboardingCompleteRoute: typeof OnboardingCompleteRoute
@@ -427,6 +440,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/check-email': {
+      id: '/check-email'
+      path: '/check-email'
+      fullPath: '/check-email'
+      preLoaderRoute: typeof CheckEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/coach-verification': {
@@ -690,6 +710,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  CheckEmailRoute: CheckEmailRoute,
   CoachVerificationRoute: CoachVerificationRoute,
   OnboardingRoute: OnboardingRoute,
   OnboardingCompleteRoute: OnboardingCompleteRoute,
