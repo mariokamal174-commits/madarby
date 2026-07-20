@@ -111,7 +111,7 @@ function CoachVerificationStatus() {
                   📜 الشهادات
                 </p>
                 <p className="text-sm">
-                  تم تحميل {verification.certificates?.length || 0} شهادة
+                  تم تحميل {Array.isArray(verification.certificates) ? verification.certificates.length : 0} شهادة
                 </p>
               </div>
               <div>
