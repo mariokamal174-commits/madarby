@@ -330,6 +330,72 @@ function AuthPage() {
                       <option value="احترافي">احترافي</option>
                     </select>
                   </div>
+
+                  {/* Personal photo */}
+                  <div>
+                    <p className="text-xs font-bold text-muted-foreground mb-2">📸 صورة شخصية</p>
+                    <label className="flex items-center justify-center w-full h-24 bg-surface border-2 border-dashed border-border rounded-2xl cursor-pointer hover:bg-background transition-colors">
+                      {coachPhoto ? (
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="size-4 text-green-600" />
+                          <span className="text-xs font-bold truncate max-w-[200px]">{coachPhoto.name}</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <Upload className="size-4 text-primary mb-1" />
+                          <p className="text-xs font-bold">ارفع صورتك الشخصية</p>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={(e) => e.target.files?.[0] && setCoachPhoto(e.target.files[0])} />
+                    </label>
+                  </div>
+
+                  {/* Certificates */}
+                  <div>
+                    <p className="text-xs font-bold text-muted-foreground mb-2">📜 صور الشهادات</p>
+                    <label className="flex flex-col items-center justify-center w-full h-24 bg-surface border-2 border-dashed border-border rounded-2xl cursor-pointer hover:bg-background transition-colors">
+                      <Upload className="size-4 text-primary mb-1" />
+                      <p className="text-xs font-bold">
+                        {coachCertificates.length > 0 ? `${coachCertificates.length} شهادة مرفقة` : "أضف الشهادات"}
+                      </p>
+                      <input type="file" multiple accept="image/*" className="hidden"
+                        onChange={(e) => e.target.files && setCoachCertificates([...coachCertificates, ...Array.from(e.target.files)])} />
+                    </label>
+                    {coachCertificates.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {coachCertificates.map((f, i) => (
+                          <div key={i} className="flex items-center justify-between bg-surface rounded-xl px-3 py-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileCheck className="size-3 text-green-600 shrink-0" />
+                              <span className="text-[11px] truncate">{f.name}</span>
+                            </div>
+                            <button type="button" onClick={() => setCoachCertificates(coachCertificates.filter((_, x) => x !== i))} className="text-[11px] text-red-600 font-bold">حذف</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* License card */}
+                  <div>
+                    <p className="text-xs font-bold text-muted-foreground mb-2">🏢 كارنيه النقابة</p>
+                    <label className="flex items-center justify-center w-full h-24 bg-surface border-2 border-dashed border-border rounded-2xl cursor-pointer hover:bg-background transition-colors">
+                      {coachLicense ? (
+                        <div className="flex items-center gap-2">
+                          <FileCheck className="size-4 text-green-600" />
+                          <span className="text-xs font-bold truncate max-w-[200px]">{coachLicense.name}</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <Upload className="size-4 text-primary mb-1" />
+                          <p className="text-xs font-bold">ارفع كارنيه النقابة</p>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={(e) => e.target.files?.[0] && setCoachLicense(e.target.files[0])} />
+                    </label>
+                  </div>
                 </>
               )}
 
